@@ -1,0 +1,57 @@
+name: Build Android Universal APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build QuickLife App (APK)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📦 Install Dependencies
+        run: npm install
+
+      - name: ⚙️ Install Capacitor Android Engine & Sharp
+        run: |
+          npm install --save @capacitor/core @capacitor/android @capacitor/cli sharp
+
+      - name: 🔨 Build Web Assets
+        run: npm run build
+
+      - name: 📱 Sync Android Platform
+        run: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: 🎨 Generate Official Red Heart App Icons for Android
+        run: node generate-icons.cjs
+
+      - name: 🏗️ Build Standalone APK
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: 📤 Upload QuickLife APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickLife-Universal-App-APK
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
