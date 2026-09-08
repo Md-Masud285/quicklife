@@ -1,0 +1,24 @@
+{
+  "name": "QuickLife - অল-ইন-ওয়ান মাল্টি-টুল মোবাইল অ্যাপ",
+  "short_name": "QuickLife",
+  "description": "রক্তদাতা ডিরেক্টরি, স্বাস্থ্য অ্যালার্ম, সূত্রাবলি ও এআই টুলস",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "medical",
+    "lifestyle",
+    "productivity",
+    "utilities"
+  ]
+}

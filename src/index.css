@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    background-color: #030712 !important;
+    color: #f8fafc;
+    font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Inter', -apple-system, sans-serif;
+    overflow-x: hidden;
+    overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
+    -webkit-overflow-scrolling: touch;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  input, textarea, [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
+/* ==========================================================================
+   ANDROID WEBVIEW GPU COMPOSITOR & TILE BLEEDING FIXES
+   (Stops all dashed lines, dotted artifacts, and font glitching on Xiaomi / Android)
+   ========================================================================== */
+
+/* 1. Eliminate Chromium GPU subpixel raster seams */
+.hardware-accel {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* 2. Override all problematic backdrop-filters in Android WebView to crisp solid layers */
+.backdrop-blur-md,
+.backdrop-blur-sm,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl,
+.backdrop-blur {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: rgba(15, 23, 42, 0.96) !important;
+}
+
+/* 3. Clean solid borders (Eliminates dotted & dashed glitch lines) */
+.border-slate-800,
+.border-slate-700 {
+  border-style: solid !important;
+  border-color: #1e293b !important;
+}
+
+/* 4. Fix Bengali Typography Ligatures & Overlapping */
+body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div {
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Inter', sans-serif;
+  line-height: 1.5;
+}
+
+button {
+  line-height: 1.25;
+}
+
+/* 5. Custom scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
+}
