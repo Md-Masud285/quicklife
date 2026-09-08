@@ -96,7 +96,25 @@ class GithubSyncService {
           localStorage.setItem('quicklife_blood_donors_v2', JSON.stringify(dbData.bloodDonors));
         }
         if (dbData.ads && Array.isArray(dbData.ads)) {
-          localStorage.setItem('quicklife_ads_campaigns_v2', JSON.stringify(dbData.ads));
+          const storedAdsStr = localStorage.getItem('quicklife_ads_campaigns_v2');
+          let syncedAds = dbData.ads;
+          if (storedAdsStr) {
+            try {
+              const localAds: any[] = JSON.parse(storedAdsStr);
+              syncedAds = dbData.ads.map((rAd: any) => {
+                const lAd = localAds.find((l: any) => l.id === rAd.id);
+                if (lAd) {
+                  return {
+                    ...rAd,
+                    impressions: Math.max(rAd.impressions || 0, lAd.impressions || 0),
+                    clicks: Math.max(rAd.clicks || 0, lAd.clicks || 0),
+                  };
+                }
+                return rAd;
+              });
+            } catch (e) {}
+          }
+          localStorage.setItem('quicklife_ads_campaigns_v2', JSON.stringify(syncedAds));
         }
         if (dbData.formulas && Array.isArray(dbData.formulas) && dbData.formulas.length > 0) {
           localStorage.setItem('quicklife_study_formulas_v2', JSON.stringify(dbData.formulas));
@@ -172,7 +190,24 @@ class GithubSyncService {
         if (storedDonors) bloodDonors = JSON.parse(storedDonors);
 
         const storedAds = localStorage.getItem('quicklife_ads_campaigns_v2');
-        if (storedAds) ads = JSON.parse(storedAds);
+        if (storedAds) {
+          const localAds: any[] = JSON.parse(storedAds);
+          if (Array.isArray(ads) && ads.length > 0) {
+            ads = localAds.map((lAd: any) => {
+              const rAd = ads.find((r: any) => r.id === lAd.id);
+              if (rAd) {
+                return {
+                  ...lAd,
+                  impressions: Math.max(lAd.impressions || 0, rAd.impressions || 0),
+                  clicks: Math.max(lAd.clicks || 0, rAd.clicks || 0),
+                };
+              }
+              return lAd;
+            });
+          } else {
+            ads = localAds;
+          }
+        }
 
         const storedFormulas = localStorage.getItem('quicklife_study_formulas_v2');
         if (storedFormulas) {

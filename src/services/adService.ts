@@ -142,23 +142,30 @@ class AdService {
     return pool[randomIndex] || candidateAds[0];
   }
 
-  // Track Impression (+1 view, local only to avoid excessive git commits)
+  private syncDebounceTimer: any = null;
+
+  // Track Impression (+1 view, synced to Cloud)
   public recordImpression(adId: string) {
     const ads = this.getAllAds();
     const ad = ads.find(a => a.id === adId);
     if (ad) {
       ad.impressions = (ad.impressions || 0) + 1;
       this.saveAds(ads, false);
+      // Batch / Debounce cloud sync so rapid impressions sync reliably without overwhelming GitHub
+      if (this.syncDebounceTimer) clearTimeout(this.syncDebounceTimer);
+      this.syncDebounceTimer = setTimeout(() => {
+        githubSyncService.pushToCloud();
+      }, 1500);
     }
   }
 
-  // Track Click (+1 click, local only to avoid excessive git commits)
+  // Track Click (+1 click, synced to Cloud)
   public recordClick(adId: string) {
     const ads = this.getAllAds();
     const ad = ads.find(a => a.id === adId);
     if (ad) {
       ad.clicks = (ad.clicks || 0) + 1;
-      this.saveAds(ads, false);
+      this.saveAds(ads, true);
     }
   }
 
