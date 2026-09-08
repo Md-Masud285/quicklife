@@ -6,6 +6,7 @@ export type AdPlacement = 'all' | 'home' | 'blood' | 'health' | 'study' | 'tools
 export type AdDisplayFormat = 'popup_and_banner' | 'banner_only' | 'popup_only';
 export type TargetAudience = 'all' | 'guests_only' | 'users_only';
 export type AdFrequency = 'always' | 'once_per_session' | 'once_per_user';
+export type AdPriority = 'high' | 'medium' | 'low';
 
 export interface AdCampaign {
   id: string;
@@ -18,6 +19,8 @@ export interface AdCampaign {
   format: AdDisplayFormat;
   targetAudience?: TargetAudience;
   frequency?: AdFrequency;
+  priority?: AdPriority;
+  targetImpressions?: number; // 0 or undefined = unlimited
   isActive: boolean;
   impressions: number;
   clicks: number;
@@ -83,6 +86,14 @@ class AdService {
     return today < ad.startDate;
   }
 
+  // Check if an ad has fulfilled its target impressions
+  public isAdTargetReached(ad: AdCampaign): boolean {
+    if (ad.targetImpressions && ad.targetImpressions > 0) {
+      return (ad.impressions || 0) >= ad.targetImpressions;
+    }
+    return false;
+  }
+
   // Get active ads matching a feature placement and valid date range
   public getActiveAdsForPlacement(placement: AdPlacement): AdCampaign[] {
     const ads = this.getAllAds();
@@ -91,6 +102,9 @@ class AdService {
     return ads.filter(ad => {
       if (!ad.isActive) return false;
       if (!ad.placements.includes('all') && !ad.placements.includes(placement)) return false;
+
+      // Check Target Impressions limit
+      if (this.isAdTargetReached(ad)) return false;
 
       // Check Start Date (must be today or earlier)
       if (ad.startDate && ad.startDate.trim() !== '') {
@@ -104,6 +118,28 @@ class AdService {
 
       return true;
     });
+  }
+
+  // Smart Fair Rotation with Priority Weights
+  public selectRotatedAd(candidateAds: AdCampaign[]): AdCampaign | null {
+    if (!candidateAds || candidateAds.length === 0) return null;
+    if (candidateAds.length === 1) return candidateAds[0];
+
+    // Build weighted lottery pool
+    const pool: AdCampaign[] = [];
+    candidateAds.forEach((ad) => {
+      const priority = ad.priority || 'medium';
+      let tickets = 2; // medium
+      if (priority === 'high') tickets = 4;
+      if (priority === 'low') tickets = 1;
+
+      for (let i = 0; i < tickets; i++) {
+        pool.push(ad);
+      }
+    });
+
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex] || candidateAds[0];
   }
 
   // Track Impression (+1 view, local only to avoid excessive git commits)

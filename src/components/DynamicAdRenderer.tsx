@@ -72,7 +72,13 @@ export const DynamicAdRenderer: React.FC<DynamicAdRendererProps> = ({ placement 
       });
 
       if (audienceMatchingAds.length > 0) {
-        const selectedAd = audienceMatchingAds[Math.floor(Math.random() * audienceMatchingAds.length)];
+        const selectedAd = adService.selectRotatedAd(audienceMatchingAds);
+        if (!selectedAd) {
+          setAd(null);
+          setShowPopup(false);
+          return;
+        }
+
         setAd(selectedAd);
         adService.recordImpression(selectedAd.id);
 

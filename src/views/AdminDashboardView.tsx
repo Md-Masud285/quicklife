@@ -31,7 +31,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { authService, type UserProfile } from '../services/authService';
-import { adService, type AdCampaign, type AdPlacement, type AdDisplayFormat, type TargetAudience, type AdFrequency } from '../services/adService';
+import { adService, type AdCampaign, type AdPlacement, type AdDisplayFormat, type TargetAudience, type AdFrequency, type AdPriority } from '../services/adService';
 import { studyFormulaService } from '../services/studyFormulaService';
 import { apiConfigService, type AuthApiConfig } from '../services/apiConfigService';
 import type { StudyFormula } from '../types';
@@ -108,6 +108,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
   const [formPlacements, setFormPlacements] = useState<AdPlacement[]>(['all']);
   const [formDisplayDelay, setFormDisplayDelay] = useState<number>(0);
   const [formCloseDelay, setFormCloseDelay] = useState<number>(0);
+  const [formPriority, setFormPriority] = useState<AdPriority>('medium');
+  const [formTargetImpressions, setFormTargetImpressions] = useState<number>(0);
 
   // Formula Form State
   const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
@@ -178,6 +180,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
     setFormFormat('popup_and_banner');
     setFormTargetAudience('all');
     setFormFrequency('always');
+    setFormPriority('medium');
+    setFormTargetImpressions(0);
     setFormStartDate(new Date().toISOString().split('T')[0]);
     setFormEndDate('');
     setFormPlacements(['all']);
@@ -197,6 +201,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
     setFormFormat(ad.format);
     setFormTargetAudience(ad.targetAudience || 'all');
     setFormFrequency(ad.frequency || 'always');
+    setFormPriority(ad.priority || 'medium');
+    setFormTargetImpressions(ad.targetImpressions || 0);
     setFormStartDate(ad.startDate || new Date().toISOString().split('T')[0]);
     setFormEndDate(ad.endDate || '');
     setFormPlacements(ad.placements);
@@ -239,6 +245,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
         format: formFormat,
         targetAudience: formTargetAudience,
         frequency: formFrequency,
+        priority: formPriority,
+        targetImpressions: Number(formTargetImpressions) || 0,
         startDate: formStartDate || new Date().toISOString().split('T')[0],
         endDate: formEndDate.trim() ? formEndDate.trim() : undefined,
         placements: formPlacements,
@@ -256,6 +264,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
         format: formFormat,
         targetAudience: formTargetAudience,
         frequency: formFrequency,
+        priority: formPriority,
+        targetImpressions: Number(formTargetImpressions) || 0,
         startDate: formStartDate || new Date().toISOString().split('T')[0],
         endDate: formEndDate.trim() ? formEndDate.trim() : undefined,
         placements: formPlacements,
@@ -901,6 +911,52 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                 </div>
               </div>
 
+              {/* Ad Priority / Weight Selector */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-300 block mb-1.5 flex items-center space-x-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+                  <span>⭐ মাল্টি-অ্যাড প্রায়োরিটি লেভেল (Priority & Rotation Weight):</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'high', label: '👑 High Priority', desc: '৪x বেশি ভিউ পাবে (টপ স্পন্সর)' },
+                    { id: 'medium', label: '⚡ Medium (স্বাভাবিক)', desc: '২x স্ট্যান্ডার্ড রোটেশন' },
+                    { id: 'low', label: '🔹 Low (বেসিক)', desc: '১x স্বাভাবিক শেয়ার' },
+                  ].map(pr => (
+                    <button
+                      key={pr.id}
+                      type="button"
+                      onClick={() => setFormPriority(pr.id as AdPriority)}
+                      className={`p-2 rounded-xl text-xs font-bold border transition text-center ${
+                        formPriority === pr.id ? 'bg-amber-600 text-white border-amber-400 shadow' : 'bg-slate-950 text-slate-400 border-slate-800'
+                      }`}
+                    >
+                      <div>{pr.label}</div>
+                      <div className="text-[9px] opacity-75 font-normal mt-0.5">{pr.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Target Impressions / View Limit */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-300 block mb-1 flex items-center space-x-1.5">
+                  <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>🎯 টার্গেট ভিউ লিমিট (Target Impressions - ঐচ্ছিক):</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formTargetImpressions || ''}
+                  onChange={(e) => setFormTargetImpressions(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  placeholder="যেমন: ১০০০ ভিউ (০ বা ফাঁকা রাখলে আনলিমিটেড)"
+                  className="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500 font-mono"
+                />
+                <span className="text-[10px] text-slate-500 block mt-1">
+                  * নির্ধারিত ভিউ পূর্ণ হলে এই বিজ্ঞাপন স্বয়ংক্রিয়ভাবে কমপ্লিট হয়ে যাবে এবং অন্য সক্রিয় বিজ্ঞাপনগুলো চলতে থাকবে।
+                </span>
+              </div>
+
               {/* Scheduling (Start & End Date) */}
               <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
                 <label className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
@@ -981,12 +1037,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                       alt={ad.title}
                       className="w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0"
                     />
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 flex-wrap gap-1">
                         <h4 className="text-xs font-bold text-white">{ad.title}</h4>
                         {adService.isAdExpired(ad) ? (
                           <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-rose-950 text-rose-300 border border-rose-700">
                             ⚠️ মেয়াদ শেষ (Expired)
+                          </span>
+                        ) : adService.isAdTargetReached(ad) ? (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-950 text-amber-300 border border-amber-700">
+                            🎉 টার্গেট সম্পন্ন (Completed)
                           </span>
                         ) : adService.isAdUpcoming(ad) ? (
                           <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-blue-950 text-blue-300 border border-blue-700">
@@ -997,6 +1057,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                             ad.isActive ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-slate-800 text-slate-400'
                           }`}>
                             {ad.isActive ? 'সক্রিয় (LIVE)' : 'বন্ধ (Paused)'}
+                          </span>
+                        )}
+                        {ad.priority === 'high' && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-950 text-amber-300 border border-amber-700">
+                            👑 High (৪x)
+                          </span>
+                        )}
+                        {ad.priority === 'low' && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                            🔹 Low (১x)
                           </span>
                         )}
                         {ad.targetAudience === 'guests_only' && (
@@ -1021,9 +1091,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                         )}
                       </div>
 
-                      <div className="text-[11px] text-slate-400 mt-1 flex flex-wrap gap-1.5">
+                      <div className="text-[11px] text-slate-400 mt-1 flex flex-wrap gap-1.5 items-center">
                         <span className="bg-slate-950 px-2 py-0.5 rounded font-mono text-indigo-300">
-                          👁️ {ad.impressions} Views
+                          👁️ {ad.impressions} {ad.targetImpressions && ad.targetImpressions > 0 ? `/ ${ad.targetImpressions}` : ''} Views
                         </span>
                         <span className="bg-slate-950 px-2 py-0.5 rounded font-mono text-emerald-300">
                           👆 {ad.clicks} Clicks
@@ -1042,6 +1112,24 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                           </span>
                         ) : null}
                       </div>
+
+                      {/* Target Impression Progress Bar */}
+                      {ad.targetImpressions && ad.targetImpressions > 0 ? (
+                        <div className="mt-1.5 max-w-xs">
+                          <div className="flex justify-between text-[9px] text-slate-400 font-mono mb-0.5">
+                            <span>টার্গেট প্রগ্রেস:</span>
+                            <span>{Math.min(100, Math.round(((ad.impressions || 0) / ad.targetImpressions) * 100))}%</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                (ad.impressions || 0) >= ad.targetImpressions ? 'bg-amber-400' : 'bg-indigo-500'
+                              }`}
+                              style={{ width: `${Math.min(100, Math.round(((ad.impressions || 0) / ad.targetImpressions) * 100))}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
