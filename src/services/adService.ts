@@ -215,6 +215,14 @@ class AdService {
     if (!ad) return false;
     ad.impressions = 0;
     ad.clicks = 0;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('ql_ad_dismissed_' + id);
+        sessionStorage.removeItem('ql_ad_session_seen_' + id);
+      } catch (e) {
+        console.warn('Could not clear local ad tokens', e);
+      }
+    }
     this.saveAds(ads, true);
     return true;
   }

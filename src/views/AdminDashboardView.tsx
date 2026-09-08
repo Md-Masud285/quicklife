@@ -290,10 +290,17 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
   };
 
   const handleResetAdAnalytics = (id: string) => {
-    if (window.confirm('আপনি কি এই বিজ্ঞাপনের ভিউ ও ক্লিক কাউন্টার রিসেট (০) করতে চান?')) {
-      adService.resetAnalytics(id);
-      setAds(adService.getAllAds());
-    }
+    adService.resetAnalytics(id);
+    setAds([...adService.getAllAds()]);
+    setSyncFeedback('🔄 ভিউ ও ক্লিক রিসেট করা হচ্ছে...');
+    githubSyncService.pushToCloud().then((res) => {
+      if (res.success) {
+        setSyncFeedback('✅ বিজ্ঞাপনের ভিউ ও ক্লিক কাউন্টার রিসেট (০) করা হয়েছে!');
+      } else {
+        setSyncFeedback('✅ কাউন্টার রিসেট করা হয়েছে (০)');
+      }
+      setTimeout(() => setSyncFeedback(null), 3000);
+    });
   };
 
   const handleToggleAd = (id: string) => {
