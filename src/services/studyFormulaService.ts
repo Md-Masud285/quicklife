@@ -13,21 +13,21 @@ class StudyFormulaService {
   private init() {
     if (typeof window === 'undefined') return;
     const stored = localStorage.getItem(STORAGE_KEY_FORMULAS);
-    if (!stored) {
+    if (stored === null) {
       localStorage.setItem(STORAGE_KEY_FORMULAS, JSON.stringify(DEFAULT_STUDY_FORMULAS));
     }
   }
 
   public getAllFormulas(): StudyFormula[] {
-    if (typeof window === 'undefined') return DEFAULT_STUDY_FORMULAS;
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem(STORAGE_KEY_FORMULAS);
-    if (!stored) return DEFAULT_STUDY_FORMULAS;
+    if (stored === null) return DEFAULT_STUDY_FORMULAS;
     try {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) return parsed;
-      return DEFAULT_STUDY_FORMULAS;
+      return [];
     } catch {
-      return DEFAULT_STUDY_FORMULAS;
+      return [];
     }
   }
 

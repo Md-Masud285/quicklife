@@ -116,13 +116,8 @@ class GithubSyncService {
           }
           localStorage.setItem('quicklife_ads_campaigns_v2', JSON.stringify(syncedAds));
         }
-        if (dbData.formulas && Array.isArray(dbData.formulas)) {
+        if (dbData.formulas !== undefined && Array.isArray(dbData.formulas)) {
           localStorage.setItem('quicklife_study_formulas_v2', JSON.stringify(dbData.formulas));
-        } else {
-          const storedFormulas = localStorage.getItem('quicklife_study_formulas_v2');
-          if (storedFormulas === null) {
-            localStorage.setItem('quicklife_study_formulas_v2', JSON.stringify(DEFAULT_STUDY_FORMULAS));
-          }
         }
         localStorage.setItem(STORAGE_KEY_LAST_SYNC, new Date().toISOString());
 
