@@ -24,7 +24,7 @@ class StudyFormulaService {
     if (!stored) return DEFAULT_STUDY_FORMULAS;
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
       return DEFAULT_STUDY_FORMULAS;
     } catch {
       return DEFAULT_STUDY_FORMULAS;

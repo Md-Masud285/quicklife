@@ -305,8 +305,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
 
   const handleToggleAd = (id: string) => {
     adService.toggleAdStatus(id);
-    setAds(adService.getAllAds());
-    githubSyncService.pushToCloud();
+    setAds([...adService.getAllAds()]);
+    setSyncFeedback('🔄 বিজ্ঞাপনের স্ট্যাটাস আপডেট হচ্ছে...');
+    githubSyncService.pushToCloud().then((res) => {
+      if (res.success) {
+        setSyncFeedback('✅ বিজ্ঞাপনের স্ট্যাটাস ক্লাউডে সেভ হয়েছে!');
+      }
+      setTimeout(() => setSyncFeedback(null), 2500);
+    });
   };
 
   const handleDeleteAd = (id: string) => {
@@ -364,10 +370,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
       });
     }
 
-    setFormulas(studyFormulaService.getAllFormulas());
+    setFormulas([...studyFormulaService.getAllFormulas()]);
     setIsFormulaModalOpen(false);
     setEditingFormulaId(null);
-    githubSyncService.pushToCloud();
+    setSyncFeedback('🔄 সূত্র ক্লাউডে সেভ হচ্ছে...');
+    githubSyncService.pushToCloud().then((res) => {
+      if (res.success) {
+        setSyncFeedback('✅ সূত্র ক্লাউডে সফলভাবে সেভ হয়েছে!');
+      }
+      setTimeout(() => setSyncFeedback(null), 3000);
+    });
   };
 
   const handleDeleteUser = (userId: string, userName: string) => {
@@ -384,8 +396,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
   const handleDeleteFormula = (id: string) => {
     if (window.confirm('আপনি কি নিশ্চিত যে এই সূত্রটি মুছে ফেলতে চান?')) {
       studyFormulaService.deleteFormula(id);
-      setFormulas(studyFormulaService.getAllFormulas());
-      githubSyncService.pushToCloud();
+      setFormulas([...studyFormulaService.getAllFormulas()]);
+      setSyncFeedback('🔄 সূত্র মুছে ক্লাউডে আপডেট করা হচ্ছে...');
+      githubSyncService.pushToCloud().then((res) => {
+        if (res.success) {
+          setSyncFeedback('✅ সূত্র সফলভাবে মুছে ক্লাউডে সেভ হয়েছে!');
+        }
+        setTimeout(() => setSyncFeedback(null), 3000);
+      });
     }
   };
 
@@ -430,7 +448,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
   const handleResetFormulas = () => {
     if (window.confirm('আপনি কি সকল সূত্র ডিফল্ট অবস্থায় রিস্টোর করতে চান?')) {
       const reset = studyFormulaService.resetToDefault();
-      setFormulas(reset);
+      setFormulas([...reset]);
+      setSyncFeedback('🔄 ডিফল্ট সূত্রাবলি ক্লাউডে রিস্টোর হচ্ছে...');
+      githubSyncService.pushToCloud().then((res) => {
+        if (res.success) {
+          setSyncFeedback('✅ সকল সূত্র সফলভাবে ডিফল্ট অবস্থায় রিস্টোর করা হয়েছে!');
+        }
+        setTimeout(() => setSyncFeedback(null), 3000);
+      });
     }
   };
 
@@ -1160,11 +1185,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                     <button
                       onClick={() => handleToggleAd(ad.id)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1 ${
-                        ad.isActive ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/50' : 'bg-slate-800 text-slate-400'
+                        ad.isActive && !adService.isAdTargetReached(ad) ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/50' : 'bg-slate-800 text-slate-400 border border-slate-700'
                       }`}
+                      title={adService.isAdTargetReached(ad) ? 'টার্গেট পূরণ হয়েছে (বন্ধ) - চালু করতে ক্লিক করুন' : 'বিজ্ঞাপন চালু/বন্ধ করুন'}
                     >
-                      {ad.isActive ? <ToggleRight className="w-4 h-4 text-emerald-400" /> : <ToggleLeft className="w-4 h-4" />}
-                      <span>{ad.isActive ? 'চালু' : 'বন্ধ'}</span>
+                      {ad.isActive && !adService.isAdTargetReached(ad) ? <ToggleRight className="w-4 h-4 text-emerald-400" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
+                      <span>{ad.isActive && !adService.isAdTargetReached(ad) ? 'চালু' : 'বন্ধ'}</span>
                     </button>
 
                     <button

@@ -150,6 +150,10 @@ class AdService {
     const ad = ads.find(a => a.id === adId);
     if (ad) {
       ad.impressions = (ad.impressions || 0) + 1;
+      // Auto turn OFF when target is reached
+      if (ad.targetImpressions && ad.targetImpressions > 0 && ad.impressions >= ad.targetImpressions) {
+        ad.isActive = false;
+      }
       this.saveAds(ads, false);
       // Batch / Debounce cloud sync so rapid impressions sync reliably without overwhelming GitHub
       if (this.syncDebounceTimer) clearTimeout(this.syncDebounceTimer);
@@ -198,7 +202,15 @@ class AdService {
     const ads = this.getAllAds();
     const ad = ads.find(a => a.id === id);
     if (!ad) return false;
-    ad.isActive = !ad.isActive;
+    
+    // If target was reached and admin turns it ON, reset impressions counter to 0 so it can run again
+    if (!ad.isActive && this.isAdTargetReached(ad)) {
+      ad.impressions = 0;
+      ad.isActive = true;
+    } else {
+      ad.isActive = !ad.isActive;
+    }
+    
     this.saveAds(ads, true);
     return ad.isActive;
   }
@@ -222,6 +234,7 @@ class AdService {
     if (!ad) return false;
     ad.impressions = 0;
     ad.clicks = 0;
+    ad.isActive = true; // Automatically turn ON when reset
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem('ql_ad_dismissed_' + id);

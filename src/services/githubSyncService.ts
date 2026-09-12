@@ -116,11 +116,11 @@ class GithubSyncService {
           }
           localStorage.setItem('quicklife_ads_campaigns_v2', JSON.stringify(syncedAds));
         }
-        if (dbData.formulas && Array.isArray(dbData.formulas) && dbData.formulas.length > 0) {
+        if (dbData.formulas && Array.isArray(dbData.formulas)) {
           localStorage.setItem('quicklife_study_formulas_v2', JSON.stringify(dbData.formulas));
         } else {
           const storedFormulas = localStorage.getItem('quicklife_study_formulas_v2');
-          if (!storedFormulas) {
+          if (storedFormulas === null) {
             localStorage.setItem('quicklife_study_formulas_v2', JSON.stringify(DEFAULT_STUDY_FORMULAS));
           }
         }
@@ -177,7 +177,7 @@ class GithubSyncService {
       let users: any[] = remoteDb?.users || [];
       let bloodDonors: any[] = remoteDb?.bloodDonors || [];
       let ads: any[] = remoteDb?.ads || [];
-      let formulas: any[] = (remoteDb?.formulas && remoteDb.formulas.length > 0) ? remoteDb.formulas : DEFAULT_STUDY_FORMULAS;
+      let formulas: any[] = Array.isArray(remoteDb?.formulas) ? remoteDb.formulas : DEFAULT_STUDY_FORMULAS;
 
       if (typeof window !== 'undefined') {
         const storedApi = localStorage.getItem('quicklife_auth_api_config_v1');
@@ -196,10 +196,14 @@ class GithubSyncService {
             ads = localAds.map((lAd: any) => {
               const rAd = ads.find((r: any) => r.id === lAd.id);
               if (rAd) {
+                const newImpressions = Math.max(lAd.impressions || 0, rAd.impressions || 0);
+                const newClicks = Math.max(lAd.clicks || 0, rAd.clicks || 0);
+                const targetReached = lAd.targetImpressions && lAd.targetImpressions > 0 && newImpressions >= lAd.targetImpressions;
                 return {
                   ...lAd,
-                  impressions: Math.max(lAd.impressions || 0, rAd.impressions || 0),
-                  clicks: Math.max(lAd.clicks || 0, rAd.clicks || 0),
+                  impressions: newImpressions,
+                  clicks: newClicks,
+                  isActive: targetReached ? false : lAd.isActive,
                 };
               }
               return lAd;
@@ -211,7 +215,12 @@ class GithubSyncService {
 
         const storedFormulas = localStorage.getItem('quicklife_study_formulas_v2');
         if (storedFormulas) {
-          formulas = JSON.parse(storedFormulas);
+          try {
+            const parsed = JSON.parse(storedFormulas);
+            if (Array.isArray(parsed)) {
+              formulas = parsed;
+            }
+          } catch (e) {}
         }
       }
 
