@@ -14,18 +14,15 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onAdminLoginSuccess
 }) => {
-  const adminCreds = authService.getAdminCredentials();
-  const defaultPhone = adminCreds.phone || '01791300399';
-  const [adminPhone, setAdminPhone] = useState(defaultPhone);
+  const [adminPhone, setAdminPhone] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const [showPhoneField, setShowPhoneField] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Sync phone when modal opens
+  // Reset fields when modal opens
   React.useEffect(() => {
     if (isOpen) {
-      setAdminPhone(authService.getAdminCredentials().phone || '01791300399');
+      setAdminPhone('');
       setAdminPassword('');
       setErrorMsg(null);
     }
@@ -35,8 +32,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const phoneToUse = adminPhone.trim() || defaultPhone;
-    if (!phoneToUse || !adminPassword.trim()) {
+    const phoneToUse = adminPhone.trim();
+    if (!phoneToUse) {
+      setErrorMsg('অনুগ্রহ করে অ্যাডমিন মোবাইল নম্বর প্রদান করুন');
+      return;
+    }
+    if (!adminPassword.trim()) {
       setErrorMsg('অনুগ্রহ করে অ্যাডমিন পাসওয়ার্ড প্রদান করুন');
       return;
     }
@@ -63,7 +64,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div 
-        className="relative w-full max-w-sm max-h-[85vh] overflow-y-auto bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-6 shadow-2xl text-left space-y-4 m-auto" 
+        className="relative w-full max-w-sm max-h-[85vh] overflow-y-auto bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-6 shadow-2xl text-left space-y-4 m-auto animate-scaleUp" 
         onClick={(e) => e.stopPropagation()}
       >
         
@@ -75,7 +76,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-white">অ্যাপ মালিক পোর্টাল</h3>
-              <p className="text-[11px] text-amber-300 font-semibold">Super-Admin Access</p>
+              <p className="text-[11px] text-amber-300 font-semibold">Super-Admin Secure Login</p>
             </div>
           </div>
           <button
@@ -93,50 +94,21 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Saved Admin Phone Card / Switcher */}
-          {!showPhoneField ? (
-            <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                <div>
-                  <div className="text-[10px] text-slate-400 font-medium">নির্ধারিত মালিকের নম্বর:</div>
-                  <div className="text-xs font-mono font-bold text-white">{adminPhone || defaultPhone}</div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowPhoneField(true)}
-                className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold underline"
-              >
-                নম্বর পরিবর্তন
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-1 animate-fadeIn">
-              <label className="text-xs font-bold text-slate-300 block flex items-center justify-between">
-                <span className="flex items-center space-x-1">
-                  <Phone className="w-3.5 h-3.5 text-amber-400" />
-                  <span>মালিকের মোবাইল নম্বর:</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowPhoneField(false)}
-                  className="text-[10px] text-slate-400 hover:text-white"
-                >
-                  লুকান
-                </button>
-              </label>
-              <input
-                type="tel"
-                value={adminPhone}
-                onChange={(e) => setAdminPhone(e.target.value)}
-                placeholder="যেমন: 017XXXXXXXX"
-                required
-                className="w-full bg-slate-950 text-white text-sm font-mono font-bold rounded-2xl px-4 py-2.5 border border-slate-700 focus:outline-none focus:border-amber-500"
-              />
-            </div>
-          )}
+          <div>
+            <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center space-x-1">
+              <Phone className="w-3.5 h-3.5 text-amber-400" />
+              <span>মালিকের মোবাইল নম্বর:</span>
+            </label>
+            <input
+              type="tel"
+              value={adminPhone}
+              onChange={(e) => setAdminPhone(e.target.value)}
+              placeholder="01XXXXXXXXX"
+              required
+              autoFocus
+              className="w-full bg-slate-950 text-white text-sm font-mono font-bold rounded-2xl px-4 py-3 border border-slate-700 focus:outline-none focus:border-amber-500"
+            />
+          </div>
 
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center space-x-1">
@@ -147,9 +119,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               type="password"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="পাসওয়ার্ড লিখুন (ডিফল্ট: 2026)"
+              placeholder="••••••••"
               required
-              autoFocus
               className="w-full bg-slate-950 text-white text-base font-mono font-bold rounded-2xl px-4 py-3 border border-slate-700 focus:outline-none focus:border-amber-500"
             />
           </div>

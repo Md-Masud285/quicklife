@@ -381,8 +381,13 @@ class AuthService {
 
   public deleteUser(userId: string): boolean {
     let allUsers = this.getAllUsers();
+    const target = allUsers.find(u => u.id === userId);
+    if (target?.role === 'admin' || userId === 'admin_root') {
+      console.warn('Super Admin cannot be deleted.');
+      return false;
+    }
     const initialLen = allUsers.length;
-    allUsers = allUsers.filter(u => u.id !== userId);
+    allUsers = allUsers.filter(u => u.id !== userId && u.role !== 'admin');
     if (allUsers.length !== initialLen) {
       localStorage.setItem(STORAGE_KEY_ALL_USERS, JSON.stringify(allUsers));
       // Also remove from donors list if matched

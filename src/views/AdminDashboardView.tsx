@@ -383,13 +383,24 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
   };
 
   const handleDeleteUser = (userId: string, userName: string) => {
+    const targetUser = users.find(u => u.id === userId);
+    if (targetUser?.role === 'admin' || userId === 'admin_root') {
+      alert('⚠️ অ্যাডমিন অ্যাকাউন্ট মুছে ফেলা সম্ভব নয়!');
+      return;
+    }
     if (window.confirm(`আপনি কি নিশ্চিত যে ইউজার "${userName}" কে ডেটাবেস থেকে সম্পূর্ণ মুছে ফেলতে চান?`)) {
       authService.deleteUser(userId);
       setUsers(authService.getAllUsers());
       if (selectedUserForView?.id === userId) {
         setSelectedUserForView(null);
       }
-      githubSyncService.pushToCloud();
+      setSyncFeedback('🔄 ইউজার মুছে ক্লাউডে আপডেট হচ্ছে...');
+      githubSyncService.pushToCloud().then((res) => {
+        if (res.success) {
+          setSyncFeedback('✅ ইউজার সফলভাবে মুছে ক্লাউডে সেভ হয়েছে!');
+        }
+        setTimeout(() => setSyncFeedback(null), 3000);
+      });
     }
   };
 
@@ -1775,13 +1786,15 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
               </div>
 
               <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
-                <button
-                  onClick={() => handleDeleteUser(selectedUserForView.id, selectedUserForView.name)}
-                  className="px-3 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-bold border border-rose-500/40 flex items-center space-x-1.5 transition"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>এই ইউজার ডিলিট করুন</span>
-                </button>
+                {selectedUserForView.role !== 'admin' && selectedUserForView.id !== 'admin_root' && (
+                  <button
+                    onClick={() => handleDeleteUser(selectedUserForView.id, selectedUserForView.name)}
+                    className="px-3 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-bold border border-rose-500/40 flex items-center space-x-1.5 transition"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>এই ইউজার ডিলিট করুন</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedUserForView(null)}
                   className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700"
