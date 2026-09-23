@@ -4,6 +4,7 @@ export interface CloudDatabaseSchema {
   version: string;
   lastUpdated: string;
   apiConfig?: any;
+  appUpdateConfig?: any;
   users?: any[];
   bloodDonors?: any[];
   ads?: any[];
@@ -89,6 +90,9 @@ class GithubSyncService {
         if (dbData.apiConfig) {
           localStorage.setItem('quicklife_auth_api_config_v1', JSON.stringify(dbData.apiConfig));
         }
+        if (dbData.appUpdateConfig) {
+          localStorage.setItem('quicklife_app_update_config_v1', JSON.stringify(dbData.appUpdateConfig));
+        }
         if (dbData.users && Array.isArray(dbData.users)) {
           localStorage.setItem('quicklife_all_users_v2', JSON.stringify(dbData.users));
         }
@@ -169,6 +173,7 @@ class GithubSyncService {
 
       // 2. Gather full local data
       let apiConfig: any = remoteDb?.apiConfig || {};
+      let appUpdateConfig: any = remoteDb?.appUpdateConfig || {};
       let users: any[] = remoteDb?.users || [];
       let bloodDonors: any[] = remoteDb?.bloodDonors || [];
       let ads: any[] = remoteDb?.ads || [];
@@ -177,6 +182,9 @@ class GithubSyncService {
       if (typeof window !== 'undefined') {
         const storedApi = localStorage.getItem('quicklife_auth_api_config_v1');
         if (storedApi) apiConfig = JSON.parse(storedApi);
+
+        const storedUpdate = localStorage.getItem('quicklife_app_update_config_v1');
+        if (storedUpdate) appUpdateConfig = JSON.parse(storedUpdate);
 
         const storedUsers = localStorage.getItem('quicklife_all_users_v2');
         if (storedUsers) users = JSON.parse(storedUsers);
@@ -223,6 +231,7 @@ class GithubSyncService {
         version: '1.0',
         lastUpdated: new Date().toISOString(),
         apiConfig,
+        appUpdateConfig,
         users,
         bloodDonors,
         ads,

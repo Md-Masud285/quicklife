@@ -26,6 +26,9 @@ import {
   saveMedicineReminders 
 } from './utils/storage';
 import { authService, type UserProfile } from './services/authService';
+import { appUpdateService, type AppUpdateConfig } from './services/appUpdateService';
+import { notificationService } from './services/notificationService';
+import { AppUpdateModal } from './components/AppUpdateModal';
 import { alarmSoundManager } from './utils/audioAlarm';
 import { BellRing, Square } from 'lucide-react';
 
@@ -51,6 +54,12 @@ export const App: React.FC = () => {
   // Active Ringing Alarm Notification state
   const [ringingMedicine, setRingingMedicine] = useState<MedicineReminder | null>(null);
 
+  // In-App Auto Update state
+  const [updateInfo, setUpdateInfo] = useState<{ hasUpdate: boolean; updateConfig: AppUpdateConfig }>({
+    hasUpdate: false,
+    updateConfig: appUpdateService.getConfig(),
+  });
+
   // Load Initial Data & Persistent User & Cloud Sync
   useEffect(() => {
     githubSyncService.pullFromCloud();
@@ -60,10 +69,20 @@ export const App: React.FC = () => {
     setEmergencyContacts(getPersonalEmergencyContacts());
     setMedicines(getMedicineReminders());
 
+    // Prompt notification permissions on load
+    notificationService.requestPermission();
+
+    // Check for App Updates
+    setUpdateInfo(appUpdateService.checkForUpdates());
+    const unsubUpdate = appUpdateService.subscribe((info) => {
+      setUpdateInfo(info);
+    });
+
     const handleCloudSync = () => {
       setDonors(getSavedBloodDonors());
       setMyProfileState(getMyDonorProfile());
       setCurrentUser(authService.getCurrentUser());
+      setUpdateInfo(appUpdateService.checkForUpdates());
     };
 
     window.addEventListener('ql_cloud_data_synced', handleCloudSync);
@@ -71,12 +90,14 @@ export const App: React.FC = () => {
     // Real-time Cloud Sync on App Open, Visibility Change & Focus
     const handleFocusSync = () => {
       githubSyncService.pullFromCloud();
+      setUpdateInfo(appUpdateService.checkForUpdates());
     };
 
     window.addEventListener('focus', handleFocusSync);
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         githubSyncService.pullFromCloud();
+        setUpdateInfo(appUpdateService.checkForUpdates());
       }
     });
 
@@ -86,6 +107,7 @@ export const App: React.FC = () => {
     }, 20000);
 
     return () => {
+      unsubUpdate();
       window.removeEventListener('ql_cloud_data_synced', handleCloudSync);
       window.removeEventListener('focus', handleFocusSync);
       clearInterval(syncInterval);
@@ -109,6 +131,14 @@ export const App: React.FC = () => {
         });
         if (match && !ringingMedicine) {
           setRingingMedicine(match);
+
+          // Native vibration and push notification in background
+          notificationService.showAlarmNotification(
+            match.medicineName,
+            match.dosage || '১ ডোজ',
+            match.mealTime
+          );
+
           const mode = match.soundMode ?? ((match as any).soundType === 'custom' ? 'custom' : 'default');
           if (mode === 'voice') {
             alarmSoundManager.playVoiceAlarm(
@@ -384,6 +414,13 @@ export const App: React.FC = () => {
           isOpen={isAdminLoginModalOpen}
           onClose={() => setIsAdminLoginModalOpen(false)}
           onAdminLoginSuccess={handleAdminLoginSuccess}
+        />
+
+        {/* In-App Auto Update Modal Popup */}
+        <AppUpdateModal
+          isOpen={updateInfo.hasUpdate && !appUpdateService.isDismissed(updateInfo.updateConfig.latestVersion)}
+          updateConfig={updateInfo.updateConfig}
+          onClose={() => setUpdateInfo(prev => ({ ...prev, hasUpdate: false }))}
         />
       </div>
     </div>

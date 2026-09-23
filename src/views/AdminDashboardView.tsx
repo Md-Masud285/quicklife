@@ -28,12 +28,16 @@ import {
   Send,
   Mail,
   Globe,
-  Calendar
+  Calendar,
+  ArrowUpCircle,
+  Download,
+  Sparkles
 } from 'lucide-react';
 import { authService, type UserProfile } from '../services/authService';
 import { adService, type AdCampaign, type AdPlacement, type AdDisplayFormat, type TargetAudience, type AdFrequency, type AdPriority } from '../services/adService';
 import { studyFormulaService } from '../services/studyFormulaService';
 import { apiConfigService, type AuthApiConfig } from '../services/apiConfigService';
+import { appUpdateService, type AppUpdateConfig, CURRENT_APP_VERSION, CURRENT_APP_VERSION_CODE } from '../services/appUpdateService';
 import type { StudyFormula } from '../types';
 
 interface AdminDashboardViewProps {
@@ -41,7 +45,7 @@ interface AdminDashboardViewProps {
 }
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackToApp }) => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'ads' | 'formulas' | 'settings' | 'users'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'ads' | 'formulas' | 'updates' | 'settings' | 'users'>('analytics');
   
   // Data
   const [users, setUsers] = useState<UserProfile[]>(authService.getAllUsers());
@@ -49,6 +53,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
   const [ads, setAds] = useState<AdCampaign[]>(adService.getAllAds());
   const [formulas, setFormulas] = useState<StudyFormula[]>(studyFormulaService.getAllFormulas());
   const [apiConfig, setApiConfig] = useState<AuthApiConfig>(apiConfigService.getConfig());
+  const [updateConfig, setUpdateConfig] = useState<AppUpdateConfig>(appUpdateService.getConfig());
+  const [updateSaveNotice, setUpdateSaveNotice] = useState<string | null>(null);
 
   // Search & Status States
   const [userSearch, setUserSearch] = useState('');
@@ -70,6 +76,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
       setAds(adService.getAllAds());
       setUsers(authService.getAllUsers());
       setFormulas(studyFormulaService.getAllFormulas());
+      setUpdateConfig(appUpdateService.getConfig());
     };
     window.addEventListener('ql_cloud_data_synced', handleCloudSync);
     return () => {
@@ -470,6 +477,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
     }
   };
 
+  const handleSaveAppUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    appUpdateService.saveConfig(updateConfig);
+    setUpdateSaveNotice('🔄 ক্লাউড ডেটাবেসে আপডেট কনফিগারেশন সেভ হচ্ছে...');
+    const res = await githubSyncService.pushToCloud();
+    if (res.success) {
+      setUpdateSaveNotice('✅ অ্যাপ আপডেট কনফিগারেশন সফলভাবে ক্লাউডে প্রকাশিত হয়েছে!');
+    } else {
+      setUpdateSaveNotice(`⚠️ লোকাল সেভ হয়েছে কিন্তু ক্লাউড সিঙ্ক ব্যর্থ: ${res.message}`);
+    }
+    setTimeout(() => setUpdateSaveNotice(null), 4000);
+  };
+
   // Filter Formulas
   const filteredFormulas = formulas.filter(f => {
     const matchSubject = formulaSubjectFilter === 'all' || f.subject === formulaSubjectFilter;
@@ -536,8 +556,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
         </div>
       )}
 
-      {/* Navigation 5 Sub-Tabs */}
-      <div className="grid grid-cols-5 gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
+      {/* Navigation 6 Sub-Tabs */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
         <button
           onClick={() => setActiveTab('analytics')}
           className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
@@ -566,6 +586,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>সূত্রাবলি ({formulas.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('updates')}
+          className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
+            activeTab === 'updates' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <ArrowUpCircle className="w-3.5 h-3.5 text-amber-400" />
+          <span>আপডেট রিলিজ</span>
         </button>
 
         <button
@@ -1436,7 +1466,219 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
         </div>
       )}
 
-      {/* TAB 4: AUTH & EMAIL OTP API SETTINGS */}
+      {/* TAB: IN-APP AUTO UPDATE RELEASE CENTER */}
+      {activeTab === 'updates' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+                <span>🚀 ইন-অ্যাপ অটো আপডেট রিলিজ সেন্টার (In-App Updates)</span>
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                প্লেস্টোর ছাড়াই ইউজারদের সরাসরি অ্যাপের ভেতরে নতুন APK আপডেট নোটিফিকেশন ও ১-ক্লিক ডাউনলোডের ব্যবস্থা
+              </p>
+            </div>
+
+            <div className="text-right">
+              <span className="text-[10px] bg-indigo-950 text-indigo-300 font-mono px-2.5 py-1 rounded-full border border-indigo-700 block">
+                চলমান বিল্ড: v{CURRENT_APP_VERSION} ({CURRENT_APP_VERSION_CODE})
+              </span>
+            </div>
+          </div>
+
+          {updateSaveNotice && (
+            <div className="p-3.5 rounded-2xl bg-indigo-950/80 border border-indigo-500/50 text-indigo-200 text-xs font-semibold animate-fadeIn">
+              {updateSaveNotice}
+            </div>
+          )}
+
+          {/* Live Status Overview Card */}
+          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white flex items-center space-x-1.5">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>লাইভ আপডেট প্রিভিউ স্ট্যাটাস:</span>
+              </span>
+              {updateConfig.isActive ? (
+                <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                  🟢 আপডেট সার্ভিস সচল (ACTIVE)
+                </span>
+              ) : (
+                <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-700 px-2 py-0.5 rounded-full font-bold">
+                  🔴 আপডেট সার্ভিস বন্ধ (OFF)
+                </span>
+              )}
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
+              <div className="flex justify-between text-slate-300">
+                <span>সার্ভারে প্রকাশিত সংস্করণ:</span>
+                <span className="font-mono text-amber-300 font-bold">v{updateConfig.latestVersion} (Code: {updateConfig.latestVersionCode})</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>বাধ্যতামূলক আপডেট (Force Update):</span>
+                <span className={updateConfig.forceUpdate ? 'text-rose-400 font-bold' : 'text-slate-400'}>
+                  {updateConfig.forceUpdate ? 'হ্যাঁ (লক থাকবে)' : 'না (ঐচ্ছিক)'}
+                </span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>ডাউনলোড লিংক স্ট্যাটাস:</span>
+                <span className={updateConfig.apkDownloadUrl ? 'text-emerald-400 font-mono text-[11px] truncate max-w-[200px]' : 'text-rose-400'}>
+                  {updateConfig.apkDownloadUrl ? updateConfig.apkDownloadUrl : '⚠️ লিংক দেওয়া হয়নি'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveAppUpdate} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
+            
+            {/* Toggle Status & Force Update */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white">ইন-অ্যাপ আপডেট অন/অফ</h4>
+                  <p className="text-[10px] text-slate-400">ইউজারদের নোটিশ পাঠাবেন কিনা</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUpdateConfig({ ...updateConfig, isActive: !updateConfig.isActive })}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                    updateConfig.isActive
+                      ? 'bg-emerald-600 text-white shadow-md'
+                      : 'bg-slate-800 text-slate-400 border border-slate-700'
+                  }`}
+                >
+                  {updateConfig.isActive ? (
+                    <>
+                      <ToggleRight className="w-4 h-4 text-white" />
+                      <span>সক্রিয়</span>
+                    </>
+                  ) : (
+                    <>
+                      <ToggleLeft className="w-4 h-4 text-slate-500" />
+                      <span>বন্ধ</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white">বাধ্যতামূলক আপডেট (Force)</h4>
+                  <p className="text-[10px] text-slate-400">আপডেট না দেওয়া পর্যন্ত অ্যাপ ব্যবহার ব্লক থাকবে</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUpdateConfig({ ...updateConfig, forceUpdate: !updateConfig.forceUpdate })}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                    updateConfig.forceUpdate
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'bg-slate-800 text-slate-400 border border-slate-700'
+                  }`}
+                >
+                  {updateConfig.forceUpdate ? (
+                    <>
+                      <ToggleRight className="w-4 h-4 text-white" />
+                      <span>বাধ্যতামূলক</span>
+                    </>
+                  ) : (
+                    <>
+                      <ToggleLeft className="w-4 h-4 text-slate-500" />
+                      <span>ঐচ্ছিক</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Version Numbers */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                <ArrowUpCircle className="w-4 h-4 text-indigo-400" />
+                <span>📦 নতুন সংস্করণ নম্বর ও বিল্ড কোড:</span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] text-slate-300 block mb-1">
+                    নতুন ভার্সন নাম (Latest Version):
+                  </label>
+                  <input
+                    type="text"
+                    value={updateConfig.latestVersion}
+                    onChange={(e) => setUpdateConfig({ ...updateConfig, latestVersion: e.target.value })}
+                    placeholder="যেমন: 1.1.0"
+                    required
+                    className="w-full bg-slate-900 text-white font-mono text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                  <span className="text-[10px] text-slate-500 block mt-1">চলমান ইনস্টলড ভার্সন: {CURRENT_APP_VERSION}</span>
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-300 block mb-1">
+                    নতুন ভার্সন কোড (Version Code):
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={updateConfig.latestVersionCode}
+                    onChange={(e) => setUpdateConfig({ ...updateConfig, latestVersionCode: parseInt(e.target.value, 10) || 0 })}
+                    placeholder="যেমন: 110"
+                    required
+                    className="w-full bg-slate-900 text-white font-mono text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                  <span className="text-[10px] text-slate-500 block mt-1">চলমান ইনস্টলড কোড: {CURRENT_APP_VERSION_CODE}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* APK Download URL */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+              <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                <Download className="w-4 h-4 text-emerald-400" />
+                <span>📥 নতুন APK সরাসরি ডাউনলোড লিংক (Google Drive / GitHub / Direct Link):</span>
+              </label>
+              <input
+                type="url"
+                value={updateConfig.apkDownloadUrl}
+                onChange={(e) => setUpdateConfig({ ...updateConfig, apkDownloadUrl: e.target.value })}
+                placeholder="https://drive.google.com/uc?export=download&id=... অথবা GitHub Release URL"
+                required
+                className="w-full bg-slate-900 text-white font-mono text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                💡 আপনি Google Drive এ APK আপলোড করে সরাসরি ডাউনলোড লিংক দিতে পারেন, অথবা GitHub Release পেজের সরাসরি `.apk` ফাইল লিংক দিতে পারেন। ইউজাররা আপডেট বাটনে ক্লিক করলেই এই লিংক থেকে সরাসরি নতুন ফাইল ডাউনলোড শুরু হবে।
+              </p>
+            </div>
+
+            {/* Release Notes */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+              <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>📝 নতুন সংস্করণের বৈশিষ্ট্য ও বিবরণ (Release Notes):</span>
+              </label>
+              <textarea
+                rows={4}
+                value={updateConfig.releaseNotes}
+                onChange={(e) => setUpdateConfig({ ...updateConfig, releaseNotes: e.target.value })}
+                placeholder="নতুন ভার্সনে কি কি যুক্ত হয়েছে বা সমাধান করা হয়েছে তা লিখুন..."
+                required
+                className="w-full bg-slate-900 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-indigo-500 leading-relaxed"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-900/30 transition flex items-center justify-center space-x-1.5"
+            >
+              <Save className="w-4 h-4" />
+              <span>🚀 নতুন আপডেট কনফিগারেশন ক্লাউডে প্রকাশ করুন</span>
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* TAB 5: AUTH & EMAIL OTP API SETTINGS */}
       {activeTab === 'settings' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">

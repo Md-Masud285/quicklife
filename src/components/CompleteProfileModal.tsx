@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Heart, MapPin, Phone, User, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Heart, MapPin, Phone, User, CheckCircle2, Navigation, Loader2 } from 'lucide-react';
 import type { BloodGroup } from '../types';
 import { authService, type UserProfile } from '../services/authService';
+import { locationService, BANGLADESH_DISTRICTS } from '../services/locationService';
 
 interface CompleteProfileModalProps {
   isOpen: boolean;
@@ -11,11 +12,6 @@ interface CompleteProfileModalProps {
 }
 
 const BLOOD_GROUPS: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-
-const BD_DISTRICTS = [
-  'ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'সিলেট', 'রংপুর', 'ময়মনসিংহ',
-  'কুমিল্লা', 'গাজীপুর', 'নারায়ণগঞ্জ', 'বগুড়া', 'দিনাজপুর', 'ফরিদপুর', 'যশোর', 'কুষ্টিয়া'
-];
 
 export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
   isOpen,
@@ -31,8 +27,24 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
   const [age, setAge] = useState('24');
   const [isDonor, setIsDonor] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDetectingGps, setIsDetectingGps] = useState(false);
+  const [gpsFeedback, setGpsFeedback] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleDetectGps = async () => {
+    setIsDetectingGps(true);
+    setGpsFeedback('📍 জিপিএস স্যাটেলাইট সিগন্যাল খুঁজছি...');
+    const res = await locationService.detectCurrentDistrict();
+    setIsDetectingGps(false);
+    if (res.success && res.district) {
+      setDistrict(res.district);
+      setGpsFeedback(`✓ জেলা সনাক্ত হয়েছে: ${res.district}`);
+    } else {
+      setGpsFeedback(`⚠️ ${res.message}`);
+    }
+    setTimeout(() => setGpsFeedback(null), 4000);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,32 +154,61 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
           </div>
 
           {/* District & Upazila */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-bold text-slate-300 block mb-1 flex items-center space-x-1">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-slate-300 flex items-center space-x-1">
                 <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                <span>জেলা:</span>
+                <span>জেলা ও থানা / এলাকা:</span>
               </label>
-              <select
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
-                className="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-700 focus:outline-none focus:border-emerald-500"
+
+              <button
+                type="button"
+                onClick={handleDetectGps}
+                disabled={isDetectingGps}
+                className="text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold px-2.5 py-1 rounded-lg border border-emerald-500/30 flex items-center space-x-1 transition active:scale-95"
               >
-                {BD_DISTRICTS.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+                {isDetectingGps ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
+                    <span>খুঁজছি...</span>
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-3 h-3 text-emerald-400" />
+                    <span>📍 GPS লোকেশন সনাক্ত করুন</span>
+                  </>
+                )}
+              </button>
             </div>
 
-            <div>
-              <label className="text-[11px] font-bold text-slate-300 block mb-1">উপজেলা / থানা:</label>
-              <input
-                type="text"
-                value={upazila}
-                onChange={(e) => setUpazila(e.target.value)}
-                placeholder="যেমন: ধানমন্ডি / মিরপুর"
-                className="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-700 focus:outline-none focus:border-emerald-500"
-              />
+            {gpsFeedback && (
+              <div className="text-[10px] font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-800/60 p-2 rounded-xl animate-fadeIn">
+                {gpsFeedback}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <select
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  className="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-700 focus:outline-none focus:border-emerald-500"
+                >
+                  {BANGLADESH_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={upazila}
+                  onChange={(e) => setUpazila(e.target.value)}
+                  placeholder="উপজেলা / থানা (যেমন: ধানমন্ডি)"
+                  className="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-700 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
             </div>
           </div>
 
