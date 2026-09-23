@@ -556,66 +556,78 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
         </div>
       )}
 
-      {/* Navigation 6 Sub-Tabs */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
+      {/* Navigation 6 Sub-Tabs (Responsive 3-col on Mobile, 6-col on Desktop) */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-xl">
         <button
           onClick={() => setActiveTab('analytics')}
-          className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
-            activeTab === 'analytics' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+          className={`py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center space-x-1.5 text-center ${
+            activeTab === 'analytics'
+              ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
-          <BarChart3 className="w-3.5 h-3.5" />
-          <span>অ্যানালিটিক্স</span>
+          <BarChart3 className="w-4 h-4 shrink-0" />
+          <span className="truncate">অ্যানালিটিক্স</span>
         </button>
 
         <button
           onClick={() => setActiveTab('ads')}
-          className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
-            activeTab === 'ads' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+          className={`py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center space-x-1.5 text-center ${
+            activeTab === 'ads'
+              ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
-          <Megaphone className="w-3.5 h-3.5" />
-          <span>বিজ্ঞাপন ({ads.filter(a => a.isActive).length})</span>
+          <Megaphone className="w-4 h-4 shrink-0" />
+          <span className="truncate">বিজ্ঞাপন ({ads.filter(a => a.isActive).length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('formulas')}
-          className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
-            activeTab === 'formulas' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+          className={`py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center space-x-1.5 text-center ${
+            activeTab === 'formulas'
+              ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>সূত্রাবলি ({formulas.length})</span>
+          <BookOpen className="w-4 h-4 shrink-0" />
+          <span className="truncate">সূত্রাবলি ({formulas.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('updates')}
-          className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
-            activeTab === 'updates' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+          className={`py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center space-x-1.5 text-center ${
+            activeTab === 'updates'
+              ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
-          <ArrowUpCircle className="w-3.5 h-3.5 text-amber-400" />
-          <span>আপডেট রিলিজ</span>
+          <ArrowUpCircle className="w-4 h-4 shrink-0 text-amber-400" />
+          <span className="truncate">আপডেট রিলিজ</span>
         </button>
 
         <button
           onClick={() => setActiveTab('settings')}
-          className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
-            activeTab === 'settings' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+          className={`py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center space-x-1.5 text-center ${
+            activeTab === 'settings'
+              ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
-          <Settings className="w-3.5 h-3.5" />
-          <span>সেটিংস</span>
+          <Settings className="w-4 h-4 shrink-0" />
+          <span className="truncate">সেটিংস</span>
         </button>
 
         <button
           onClick={() => setActiveTab('users')}
-          className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
-            activeTab === 'users' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+          className={`py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center space-x-1.5 text-center ${
+            activeTab === 'users'
+              ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
-          <Users className="w-3.5 h-3.5" />
-          <span>ইউজার ({users.length})</span>
+          <Users className="w-4 h-4 shrink-0" />
+          <span className="truncate">ইউজার ({users.length})</span>
         </button>
       </div>
 
