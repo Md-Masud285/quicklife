@@ -37,7 +37,7 @@ import { authService, type UserProfile } from '../services/authService';
 import { adService, type AdCampaign, type AdPlacement, type AdDisplayFormat, type TargetAudience, type AdFrequency, type AdPriority } from '../services/adService';
 import { studyFormulaService } from '../services/studyFormulaService';
 import { apiConfigService, type AuthApiConfig } from '../services/apiConfigService';
-import { appUpdateService, type AppUpdateConfig, CURRENT_APP_VERSION, CURRENT_APP_VERSION_CODE } from '../services/appUpdateService';
+import { appUpdateService, type AppUpdateConfig, CURRENT_APP_VERSION } from '../services/appUpdateService';
 import type { StudyFormula } from '../types';
 
 interface AdminDashboardViewProps {
@@ -1480,76 +1480,51 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
 
       {/* TAB: IN-APP AUTO UPDATE RELEASE CENTER */}
       {activeTab === 'updates' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-                <span>🚀 ইন-অ্যাপ অটো আপডেট রিলিজ সেন্টার (In-App Updates)</span>
-              </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                প্লেস্টোর ছাড়াই ইউজারদের সরাসরি অ্যাপের ভেতরে নতুন APK আপডেট নোটিফিকেশন ও ১-ক্লিক ডাউনলোডের ব্যবস্থা
-              </p>
+        <div className="space-y-4 animate-fadeIn">
+          {/* Top Status Card */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-indigo-500/30 flex items-center justify-between shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold">
+                <ArrowUpCircle className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+                  <span>ইন-অ্যাপ অটো আপডেট রিলিজ</span>
+                  {updateConfig.isActive ? (
+                    <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                      🟢 লাইভ চালু
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-700 px-2 py-0.5 rounded-full font-bold">
+                      🔴 বন্ধ
+                    </span>
+                  )}
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  ব্যবহারকারীদের অ্যাপের ভেতরে ১-ক্লিক আপডেট পপআপ পাঠানোর কন্ট্রোল
+                </p>
+              </div>
             </div>
 
-            <div className="text-right">
-              <span className="text-[10px] bg-indigo-950 text-indigo-300 font-mono px-2.5 py-1 rounded-full border border-indigo-700 block">
-                চলমান বিল্ড: v{CURRENT_APP_VERSION} ({CURRENT_APP_VERSION_CODE})
-              </span>
-            </div>
+            <span className="text-[11px] bg-slate-950 text-indigo-300 font-mono font-bold px-3 py-1 rounded-xl border border-slate-800">
+              বিল্ড: v{CURRENT_APP_VERSION}
+            </span>
           </div>
 
           {updateSaveNotice && (
-            <div className="p-3.5 rounded-2xl bg-indigo-950/80 border border-indigo-500/50 text-indigo-200 text-xs font-semibold animate-fadeIn">
+            <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold animate-fadeIn">
               {updateSaveNotice}
             </div>
           )}
 
-          {/* Live Status Overview Card */}
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center space-x-1.5">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>লাইভ আপডেট প্রিভিউ স্ট্যাটাস:</span>
-              </span>
-              {updateConfig.isActive ? (
-                <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-bold">
-                  🟢 আপডেট সার্ভিস সচল (ACTIVE)
-                </span>
-              ) : (
-                <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-700 px-2 py-0.5 rounded-full font-bold">
-                  🔴 আপডেট সার্ভিস বন্ধ (OFF)
-                </span>
-              )}
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
-              <div className="flex justify-between text-slate-300">
-                <span>সার্ভারে প্রকাশিত সংস্করণ:</span>
-                <span className="font-mono text-amber-300 font-bold">v{updateConfig.latestVersion} (Code: {updateConfig.latestVersionCode})</span>
-              </div>
-              <div className="flex justify-between text-slate-300">
-                <span>বাধ্যতামূলক আপডেট (Force Update):</span>
-                <span className={updateConfig.forceUpdate ? 'text-rose-400 font-bold' : 'text-slate-400'}>
-                  {updateConfig.forceUpdate ? 'হ্যাঁ (লক থাকবে)' : 'না (ঐচ্ছিক)'}
-                </span>
-              </div>
-              <div className="flex justify-between text-slate-300">
-                <span>ডাউনলোড লিংক স্ট্যাটাস:</span>
-                <span className={updateConfig.apkDownloadUrl ? 'text-emerald-400 font-mono text-[11px] truncate max-w-[200px]' : 'text-rose-400'}>
-                  {updateConfig.apkDownloadUrl ? updateConfig.apkDownloadUrl : '⚠️ লিংক দেওয়া হয়নি'}
-                </span>
-              </div>
-            </div>
-          </div>
-
           <form onSubmit={handleSaveAppUpdate} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
             
-            {/* Toggle Status & Force Update */}
+            {/* Toggles Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-white">ইন-অ্যাপ আপডেট অন/অফ</h4>
-                  <p className="text-[10px] text-slate-400">ইউজারদের নোটিশ পাঠাবেন কিনা</p>
+                  <h4 className="text-xs font-bold text-white">আপডেট সার্ভিস চালু</h4>
+                  <p className="text-[10px] text-slate-400">ইউজারদের আপডেট নোটিশ পাঠানো</p>
                 </div>
                 <button
                   type="button"
@@ -1574,10 +1549,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                 </button>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
                 <div>
                   <h4 className="text-xs font-bold text-white">বাধ্যতামূলক আপডেট (Force)</h4>
-                  <p className="text-[10px] text-slate-400">আপডেট না দেওয়া পর্যন্ত অ্যাপ ব্যবহার ব্লক থাকবে</p>
+                  <p className="text-[10px] text-slate-400">আপডেট না দিলে অ্যাপ ব্লক থাকবে</p>
                 </div>
                 <button
                   type="button"
@@ -1591,89 +1566,79 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                   {updateConfig.forceUpdate ? (
                     <>
                       <ToggleRight className="w-4 h-4 text-white" />
-                      <span>বাধ্যতামূলক</span>
+                      <span>হ্যাঁ</span>
                     </>
                   ) : (
                     <>
                       <ToggleLeft className="w-4 h-4 text-slate-500" />
-                      <span>ঐচ্ছিক</span>
+                      <span>না</span>
                     </>
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Version Numbers */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-              <label className="text-xs font-bold text-white flex items-center space-x-1.5">
-                <ArrowUpCircle className="w-4 h-4 text-indigo-400" />
-                <span>📦 নতুন সংস্করণ নম্বর ও বিল্ড কোড:</span>
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] text-slate-300 block mb-1">
-                    নতুন ভার্সন নাম (Latest Version):
-                  </label>
-                  <input
-                    type="text"
-                    value={updateConfig.latestVersion}
-                    onChange={(e) => setUpdateConfig({ ...updateConfig, latestVersion: e.target.value })}
-                    placeholder="যেমন: 1.1.0"
-                    required
-                    className="w-full bg-slate-900 text-white font-mono text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
-                  />
-                  <span className="text-[10px] text-slate-500 block mt-1">চলমান ইনস্টলড ভার্সন: {CURRENT_APP_VERSION}</span>
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-slate-300 block mb-1">
-                    নতুন ভার্সন কোড (Version Code):
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={updateConfig.latestVersionCode}
-                    onChange={(e) => setUpdateConfig({ ...updateConfig, latestVersionCode: parseInt(e.target.value, 10) || 0 })}
-                    placeholder="যেমন: 110"
-                    required
-                    className="w-full bg-slate-900 text-white font-mono text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
-                  />
-                  <span className="text-[10px] text-slate-500 block mt-1">চলমান ইনস্টলড কোড: {CURRENT_APP_VERSION_CODE}</span>
-                </div>
+            {/* Single Version Number Input */}
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                  <ArrowUpCircle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>নতুন ভার্সন নম্বর (Latest Version):</span>
+                </label>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  বর্তমান: v{CURRENT_APP_VERSION}
+                </span>
               </div>
+              <input
+                type="text"
+                value={updateConfig.latestVersion}
+                onChange={(e) => {
+                  const newVer = e.target.value;
+                  const parts = newVer.replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
+                  const autoCode = (parts[0] || 1) * 100 + (parts[1] || 0) * 10 + (parts[2] || 0);
+                  setUpdateConfig({
+                    ...updateConfig,
+                    latestVersion: newVer,
+                    latestVersionCode: autoCode || 100,
+                  });
+                }}
+                placeholder="যেমন: 1.1.0"
+                required
+                className="w-full bg-slate-900 text-white font-mono font-bold text-xs rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
             </div>
 
             {/* APK Download URL */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
               <label className="text-xs font-bold text-white flex items-center space-x-1.5">
-                <Download className="w-4 h-4 text-emerald-400" />
-                <span>📥 নতুন APK সরাসরি ডাউনলোড লিংক (Google Drive / GitHub / Direct Link):</span>
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <span>APK ডাউনলোড লিংক (Google Drive / GitHub Direct Link):</span>
               </label>
               <input
                 type="url"
-                value={updateConfig.apkDownloadUrl}
-                onChange={(e) => setUpdateConfig({ ...updateConfig, apkDownloadUrl: e.target.value })}
-                placeholder="https://drive.google.com/uc?export=download&id=... অথবা GitHub Release URL"
+                value={updateConfig.apkDownloadUrl || updateConfig.downloadUrl || ''}
+                onChange={(e) => setUpdateConfig({ 
+                  ...updateConfig, 
+                  apkDownloadUrl: e.target.value,
+                  downloadUrl: e.target.value
+                })}
+                placeholder="https://drive.google.com/... অথবা https://github.com/.../app.apk"
                 required
-                className="w-full bg-slate-900 text-white font-mono text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-900 text-white font-mono text-xs rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-indigo-500"
               />
-              <p className="text-[10px] text-slate-400 leading-relaxed">
-                💡 আপনি Google Drive এ APK আপলোড করে সরাসরি ডাউনলোড লিংক দিতে পারেন, অথবা GitHub Release পেজের সরাসরি `.apk` ফাইল লিংক দিতে পারেন। ইউজাররা আপডেট বাটনে ক্লিক করলেই এই লিংক থেকে সরাসরি নতুন ফাইল ডাউনলোড শুরু হবে।
-              </p>
             </div>
 
             {/* Release Notes */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
               <label className="text-xs font-bold text-white flex items-center space-x-1.5">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>📝 নতুন সংস্করণের বৈশিষ্ট্য ও বিবরণ (Release Notes):</span>
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>নতুন কী পরিবর্তন হয়েছে (Release Notes):</span>
               </label>
               <textarea
-                rows={4}
+                rows={3}
                 value={updateConfig.releaseNotes}
                 onChange={(e) => setUpdateConfig({ ...updateConfig, releaseNotes: e.target.value })}
-                placeholder="নতুন ভার্সনে কি কি যুক্ত হয়েছে বা সমাধান করা হয়েছে তা লিখুন..."
+                placeholder="• নতুন ফিচার ও বাগ ফিক্স..."
                 required
                 className="w-full bg-slate-900 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-indigo-500 leading-relaxed"
               />
@@ -1681,10 +1646,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-900/30 transition flex items-center justify-center space-x-1.5"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-lg shadow-emerald-900/30 transition flex items-center justify-center space-x-1.5 active:scale-98 cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>🚀 নতুন আপডেট কনফিগারেশন ক্লাউডে প্রকাশ করুন</span>
+              <span>🚀 নতুন আপডেট ক্লাউডে প্রকাশ করুন</span>
             </button>
           </form>
         </div>
