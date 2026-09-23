@@ -2139,7 +2139,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onBackTo
                 <label className="text-[11px] text-slate-300 block mb-1">অ্যাডমিন মোবাইল:</label>
                 <input
                   type="text"
-                  value="01791300399"
+                  value={authService.getAdminCredentials().phone}
                   disabled
                   className="w-full bg-slate-950 text-slate-400 font-mono text-xs rounded-xl px-3 py-2.5 border border-slate-800 cursor-not-allowed"
                 />
