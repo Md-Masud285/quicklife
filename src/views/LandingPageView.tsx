@@ -24,6 +24,7 @@ import {
   Bot
 } from 'lucide-react';
 import { appUpdateService, type AppUpdateConfig, CURRENT_APP_VERSION } from '../services/appUpdateService';
+import { formatBanglaNumber } from '../utils/dateHelper';
 
 interface LandingPageViewProps {
   onLaunchWebApp: () => void;
@@ -33,13 +34,15 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
   const [lang, setLang] = useState<'bn' | 'en'>('bn');
   const [isDark, setIsDark] = useState<boolean>(true);
   const [updateConfig, setUpdateConfig] = useState<AppUpdateConfig>(appUpdateService.getConfig());
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(1); // Open FAQ 2 by default so user immediately sees safety answer
 
   useEffect(() => {
     setUpdateConfig(appUpdateService.getConfig());
     const unsub = appUpdateService.subscribe((info) => {
       setUpdateConfig(info.updateConfig);
     });
+    // Trigger dynamic fetch of GitHub releases
+    appUpdateService.fetchLatestGitHubRelease();
     return () => unsub();
   }, []);
 
@@ -49,6 +52,9 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
     window.open(downloadUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const dynamicVersion = updateConfig.latestVersion || CURRENT_APP_VERSION;
+  const dynamicSize = updateConfig.apkSize || '14.8 MB';
+
   const t = {
     bn: {
       appName: 'QuickLife99',
@@ -57,7 +63,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
       heroTitle: 'জীবন বাঁচানোর জরুরি সেবা এখন এক স্পর্শেই',
       heroSubtitle: 'জরুরি মুহূর্তে রক্তদাতা সন্ধান, ব্যাকগ্রাউন্ড মেডিসিন অ্যালার্ম, ডিজিটাল সূত্রাবলি ও ৯৯৯ অ্যাম্বুলেন্স সেবা — কোনো খরচ ছাড়াই সম্পূর্ণ বিনামূল্যে।',
       downloadBtn: `ডাউনলোড QuickLife99 APK`,
-      versionLabel: `ভার্সন v${updateConfig.latestVersion || CURRENT_APP_VERSION} • সাইজ ~১৫ MB`,
+      versionLabel: `ভার্সন v${formatBanglaNumber(dynamicVersion)} • সাইজ ~${formatBanglaNumber(dynamicSize.replace('MB', ''))} মেগাবাইট`,
       webAppBtn: '🌐 ব্রাউজারে ওয়েব অ্যাপ চালান',
       scanQrText: 'ফোনে স্ক্যান করে সরাসরি ডাউনলোড করুন',
       priority1Title: '🩸 রক্তদাতা ডিরেক্টরি ও ৬৪ জেলা লাইভ সার্চ',
@@ -83,7 +89,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
       faq1Q: 'QuickLife99 অ্যাপটি কি সত্যিই ১০০% ফ্রি?',
       faq1A: 'হ্যাঁ, QuickLife99 এর রক্তদাতা সন্ধান, অ্যালার্ম, সূত্রাবলি ও জরুরি সেবা সম্পূর্ণ বিনামূল্যে আজীবন ব্যবহার করা যাবে।',
       faq2Q: 'প্লেস্টোরের বাইরে গুগল ড্রাইভ বা ওয়েবসাইট থেকে APK ইনস্টল করা কি নিরাপদ?',
-      faq2A: 'সম্পূর্ণ নিরাপদ। অ্যাপটির সোর্স কোড গিটহাবে ওপেন রয়েছে এবং এতে কোনো ক্ষতিকারক কোড বা স্পাইওয়্যার নেই। অ্যান্ড্রয়েডের স্ট্যান্ডার্ড সিকিউরিটি পারমিশন দিয়ে সহজে ইনস্টল করতে পারবেন।',
+      faq2A: 'আমাদের অফিসিয়াল ওয়েবসাইট ও ভেরিফাইড গিটহাব পেজ থেকে QuickLife99 APK ডাউনলোড করা ১০০% নিরাপদ ও সম্পূর্ণ সুরক্ষিত। এতে কোনো ধরনের ভাইরাস, স্পাইওয়্যার বা ক্ষতিকর কোড নেই। গুগল প্লেস্টোরের বাইরে যেকোনো অফিশিয়াল APK ইনস্টল করার সময় অ্যান্ড্রয়েড সিস্টেম সতর্কতামূলক নোটিশ দেখালে "Install anyway" বা "Allow from this source" দিয়ে নিশ্চিন্তে ইনস্টল করতে পারেন।',
       faq3Q: 'পরবর্তীতে নতুন আপডেট এলে কীভাবে আপডেট করব?',
       faq3A: 'আপনাকে আর নতুন লিংক খুঁজতে হবে না! অ্যাপ ওপেন করলেই স্বয়ংক্রিয়ভাবে ইন-অ্যাপ আপডেট নোটিফিকেশন পাবেন এবং ১-ক্লিকেই আপডেট হয়ে যাবে।',
       faq4Q: 'রক্তদাতা হিসেবে কীভাবে নিজের নাম যুক্ত করব?',
@@ -98,7 +104,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
       heroTitle: 'Emergency Life-Saving Services At Your Fingertips',
       heroSubtitle: 'Find voluntary blood donors across 64 districts in Bangladesh, smart background medicine alarms, formula solver & 999 emergency services — 100% free.',
       downloadBtn: `Download QuickLife99 APK`,
-      versionLabel: `Version v${updateConfig.latestVersion || CURRENT_APP_VERSION} • Size ~15 MB`,
+      versionLabel: `Version v${dynamicVersion} • Size ~${dynamicSize}`,
       webAppBtn: '🌐 Launch Web App Online',
       scanQrText: 'Scan with mobile camera to download APK',
       priority1Title: '🩸 Blood Donor Directory & 64-District Search',
@@ -124,7 +130,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
       faq1Q: 'Is QuickLife99 completely free to use?',
       faq1A: 'Yes, all core features including blood donation, medicine alarms, study formulas, and emergency services are 100% free forever.',
       faq2Q: 'Is it safe to install APK from outside Google Play Store?',
-      faq2A: 'Absolutely safe. The code is transparent on GitHub, verified, and free of spyware or ads.',
+      faq2A: 'Downloading QuickLife99 APK directly from our official website & verified GitHub repository is 100% safe, clean, and secure. It contains zero spyware, malware, or ads. If Android displays a default security prompt for direct APK installs, simply tap "Install anyway" or "Allow from this source" with full confidence.',
       faq3Q: 'How will I receive future updates?',
       faq3A: 'Our smart In-App Auto Update engine will notify you directly inside the app with 1-click update installation.',
       faq4Q: 'How can I register as a voluntary blood donor?',
@@ -136,7 +142,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(downloadUrl)}&color=e11d48&bgcolor=0f172a`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(downloadUrl)}&color=e11d48&bgcolor=${isDark ? '0f172a' : 'ffffff'}`;
 
   return (
     <div className={`w-full min-h-screen overflow-y-auto overflow-x-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} text-left selection:bg-rose-500 selection:text-white`}>
@@ -144,67 +150,73 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
       {/* Top Floating Glow Backdrop */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-rose-600/15 via-indigo-600/10 to-transparent blur-3xl pointer-events-none -z-10" />
 
-      {/* Sticky Header Navigation */}
-      <header className={`sticky top-0 z-50 backdrop-blur-xl border-b transition-colors duration-300 ${isDark ? 'bg-slate-950/80 border-slate-800/80' : 'bg-white/85 border-slate-200 shadow-sm'}`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+      {/* Sticky Responsive Header Navigation */}
+      <header className={`sticky top-0 z-50 backdrop-blur-xl border-b transition-colors duration-300 ${isDark ? 'bg-slate-950/90 border-slate-800/80' : 'bg-white/90 border-slate-200 shadow-sm'}`}>
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2">
           
           {/* Brand Logo */}
-          <div className="flex items-center space-x-3 cursor-pointer select-none" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 via-red-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-600/30 active:scale-95 transition">
-              <HeartPulse className="w-6 h-6 text-white animate-pulse" />
+          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer select-none shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-rose-600 via-red-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-600/30 active:scale-95 transition shrink-0">
+              <HeartPulse className="w-4 h-4 sm:w-6 sm:h-6 text-white animate-pulse" />
             </div>
             <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="text-xl font-black tracking-tight font-sans">QuickLife<span className="text-rose-500">99</span></span>
-                <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
+              <div className="flex items-center space-x-1 sm:space-x-1.5">
+                <span className="text-base sm:text-xl font-black tracking-tight font-sans">QuickLife<span className="text-rose-500">99</span></span>
+                <span className="text-[8px] sm:text-[10px] uppercase font-extrabold px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
                   OFFICIAL
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium hidden sm:block">Emergency & Healthcare App</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-medium hidden md:block">Emergency & Healthcare App</p>
             </div>
           </div>
 
-          {/* Action Tools: Lang, Dark Mode & Launch Button */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Action Tools: Lang, Dark Mode, Web App & Download Button */}
+          <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
             {/* Language Switch */}
             <button
               onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center space-x-1 ${
+              className={`px-2 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold border transition flex items-center space-x-1 cursor-pointer ${
                 isDark ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white' : 'bg-slate-100 border-slate-300 text-slate-700 hover:text-slate-900'
               }`}
-              title="Change Language"
+              title="Change Language / ভাষা পরিবর্তন"
             >
-              <Globe className="w-3.5 h-3.5 text-rose-500" />
-              <span>{lang === 'bn' ? 'English' : 'বাংলা'}</span>
+              <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500" />
+              <span className="hidden sm:inline">{lang === 'bn' ? 'English' : 'বাংলা'}</span>
+              <span className="sm:hidden">{lang === 'bn' ? 'EN' : 'বাং'}</span>
             </button>
 
             {/* Dark / Light Toggle */}
             <button
               onClick={() => setIsDark(!isDark)}
-              className={`p-2 rounded-xl border transition ${
+              className={`p-1.5 sm:p-2 rounded-xl border transition cursor-pointer ${
                 isDark ? 'bg-slate-900 border-slate-800 text-amber-400 hover:text-amber-300' : 'bg-slate-100 border-slate-300 text-slate-700 hover:text-slate-900'
               }`}
-              title="Toggle Theme"
+              title="Toggle Dark/Light Mode"
             >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDark ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </button>
 
             {/* Launch Web App Button */}
             <button
               onClick={onLaunchWebApp}
-              className="hidden sm:flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold border border-slate-700 transition shadow-md active:scale-95 cursor-pointer"
+              className={`flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold border transition shadow-sm active:scale-95 cursor-pointer ${
+                isDark ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+              }`}
+              title="ওয়েব অ্যাপ খুলুন"
             >
               <Smartphone className="w-3.5 h-3.5 text-rose-400" />
-              <span>ওয়েব অ্যাপ</span>
+              <span className="hidden xs:inline sm:inline">ওয়েব অ্যাপ</span>
             </button>
 
             {/* Top Direct Download CTA */}
             <button
               onClick={handleDownload}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-lg shadow-rose-600/30 transition active:scale-95 cursor-pointer"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-500 hover:to-red-500 text-white text-[11px] sm:text-xs font-extrabold shadow-lg shadow-rose-600/30 transition active:scale-95 cursor-pointer"
+              title="APK ফাইল ডাউনলোড করুন"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>APK ডাউনলোড</span>
+              <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span>APK</span>
+              <span className="hidden sm:inline">ডাউনলোড</span>
             </button>
           </div>
         </div>
@@ -286,17 +298,31 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
           </span>
         </div>
 
-        {/* Desktop QR Code Scan Download Box */}
-        <div className="hidden lg:flex items-center justify-center pt-2">
-          <div className={`p-4 rounded-3xl border flex items-center space-x-4 shadow-xl ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'}`}>
-            <img src={qrImageUrl} alt="Download QR Code" className="w-20 h-20 rounded-xl border border-rose-500/30 shadow" />
+        {/* Dynamic Interactive QR Code Box (Scan with phone or click to download) */}
+        <div className="flex items-center justify-center pt-2">
+          <div 
+            onClick={handleDownload}
+            className={`p-3.5 sm:p-4 rounded-3xl border flex items-center space-x-3 sm:space-x-4 shadow-xl transition-all hover:scale-[1.02] active:scale-95 cursor-pointer max-w-sm sm:max-w-md ${
+              isDark ? 'bg-slate-900/90 hover:bg-slate-900 border-slate-800 hover:border-rose-500/50' : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-rose-400'
+            }`}
+            title="ক্লিক করে সরাসরি APK ডাউনলোড করুন অথবা ফোনে স্ক্যান করুন"
+          >
+            <div className="relative shrink-0">
+              <img 
+                src={qrImageUrl} 
+                alt="QuickLife99 APK Download QR Code" 
+                className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl border-2 border-rose-500/30 shadow-md object-contain bg-slate-950 p-1" 
+                loading="eager"
+              />
+              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10 pointer-events-none" />
+            </div>
             <div className="text-left space-y-1">
               <div className="flex items-center space-x-1.5 text-rose-500 font-bold text-xs">
-                <QrCode className="w-4 h-4" />
+                <QrCode className="w-4 h-4 animate-pulse" />
                 <span>QR কোড স্ক্যানার</span>
               </div>
-              <p className="text-xs font-semibold">{t.scanQrText}</p>
-              <span className="text-[10px] text-slate-400 font-mono block">Android 6.0+ Supported</span>
+              <p className="text-xs sm:text-sm font-bold text-white leading-tight">{t.scanQrText}</p>
+              <span className="text-[10px] text-slate-400 font-mono block">Android 6.0+ • ১-ক্লিক ইনস্টল</span>
             </div>
           </div>
         </div>

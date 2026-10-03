@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HeartPulse, ShieldAlert, User, Download } from 'lucide-react';
+import { HeartPulse, ShieldAlert, User, Globe } from 'lucide-react';
 import type { UserProfile } from '../services/authService';
 
 interface NavbarProps {
@@ -77,11 +77,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           {onOpenLandingPage && (
             <button
               onClick={onOpenLandingPage}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-rose-400 hover:text-rose-300 text-[11px] font-bold border border-rose-500/30 flex items-center space-x-1 transition shadow-sm active:scale-95 cursor-pointer"
-              title="অ্যাপ ডাউনলোড ও ল্যান্ডিং পেজ"
+              className="px-2 sm:px-2.5 py-1.5 rounded-full bg-gradient-to-r from-rose-950/80 to-slate-900 hover:from-rose-900 hover:to-slate-800 text-rose-300 hover:text-white text-[11px] font-bold border border-rose-500/40 flex items-center space-x-1 transition shadow-sm active:scale-95 cursor-pointer"
+              title="অফিসিয়াল ওয়েব পেজ ও APK ডাউনলোড"
             >
-              <Download className="w-3.5 h-3.5 text-rose-500" />
-              <span className="hidden sm:inline">ডাউনলোড</span>
+              <Globe className="w-3.5 h-3.5 text-rose-400" />
+              <span>ওয়েব পেজ</span>
             </button>
           )}
 

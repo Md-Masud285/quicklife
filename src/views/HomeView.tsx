@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   Droplet, 
   BellRing, 
@@ -7,7 +6,8 @@ import {
   PhoneCall, 
   ArrowRight,
   Clock,
-  Sparkle
+  Sparkle,
+  Globe
 } from 'lucide-react';
 import type { ActiveTab } from '../components/BottomNav';
 import { AdBanner } from '../components/AdBanner';
@@ -20,13 +20,15 @@ interface HomeViewProps {
   medicines: MedicineReminder[];
   onOpenEmergencyModal: () => void;
   donorsCount: number;
+  onOpenLandingPage?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   setActiveTab,
   medicines,
   onOpenEmergencyModal,
-  donorsCount
+  donorsCount,
+  onOpenLandingPage
 }) => {
   const activeMedicines = medicines.filter(m => m.isEnabled);
 
@@ -41,7 +43,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <Sparkle className="w-3 h-3 text-rose-400" />
               <span>আপনার স্মার্ট লাইফ সঙ্গী</span>
             </span>
-            <span className="text-xs text-slate-400">বাংলাদেশ 🇧🇩</span>
+            {onOpenLandingPage ? (
+              <button
+                onClick={onOpenLandingPage}
+                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-rose-500/30 text-[11px] font-bold text-rose-300 transition active:scale-95 shadow"
+                title="অফিসিয়াল ওয়েব পেজ ও APK ডাউনলোড"
+              >
+                <Globe className="w-3 h-3 text-rose-400" />
+                <span>ওয়েব পেজ ও APK</span>
+              </button>
+            ) : (
+              <span className="text-xs text-slate-400">বাংলাদেশ 🇧🇩</span>
+            )}
           </div>
 
           <h2 className="text-2xl font-bold text-white tracking-tight leading-snug">

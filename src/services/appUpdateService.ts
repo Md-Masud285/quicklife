@@ -6,6 +6,7 @@ export interface AppUpdateConfig {
   latestVersionCode: number;
   downloadUrl: string;
   apkDownloadUrl?: string;
+  apkSize?: string;
   releaseNotes: string;
   forceUpdate: boolean;
   isActive?: boolean;
@@ -21,6 +22,7 @@ const STORAGE_KEY_DISMISSED_VERSION = 'quicklife_dismissed_update_version';
 export const DEFAULT_UPDATE_CONFIG: AppUpdateConfig = {
   latestVersion: '1.0.0',
   latestVersionCode: 100,
+  apkSize: '14.8 MB',
   downloadUrl: 'https://github.com/Md-Masud285/quicklife/releases',
   apkDownloadUrl: 'https://github.com/Md-Masud285/quicklife/releases',
   releaseNotes: '• প্রথম অফিসিয়াল রিলিজ\n• রক্তদাতা ডিরেক্টরি\n• ডিজিটাল স্টাডি হাব ও সূত্রাবলি\n• মেডিসিন অ্যালার্ম সিস্টেম',
@@ -69,6 +71,39 @@ class AppUpdateService {
         this.notify();
       }
     });
+
+    // Auto-fetch latest GitHub release metadata (version, asset size in MB, direct APK url)
+    this.fetchLatestGitHubRelease();
+  }
+
+  public async fetchLatestGitHubRelease(): Promise<void> {
+    try {
+      const res = await fetch('https://api.github.com/repos/Md-Masud285/quicklife/releases/latest', {
+        headers: { 'Accept': 'application/vnd.github.v3+json' },
+      });
+      if (res.ok) {
+        const release = await res.json();
+        const apkAsset = release.assets?.find((a: any) => a.name?.endsWith('.apk')) || release.assets?.[0];
+        const sizeMb = apkAsset?.size ? `${(apkAsset.size / (1024 * 1024)).toFixed(1)} MB` : undefined;
+        const versionStr = (release.tag_name || release.name || '').replace(/^v/i, '');
+
+        if (versionStr) {
+          const updated: Partial<AppUpdateConfig> = {
+            latestVersion: versionStr,
+            downloadUrl: apkAsset?.browser_download_url || release.html_url || this.config.downloadUrl,
+            apkDownloadUrl: apkAsset?.browser_download_url || release.html_url || this.config.apkDownloadUrl,
+          };
+          if (sizeMb) updated.apkSize = sizeMb;
+          if (release.body) updated.releaseNotes = release.body;
+          if (release.published_at) updated.releasedAt = release.published_at.split('T')[0];
+
+          this.config = { ...this.config, ...updated };
+          this.notify();
+        }
+      }
+    } catch {
+      // Offline or rate-limited: preserve current config
+    }
   }
 
   public getConfig(): AppUpdateConfig {

@@ -318,6 +318,7 @@ export const App: React.FC = () => {
                   medicines={medicines}
                   onOpenEmergencyModal={() => setIsEmergencyModalOpen(true)}
                   donorsCount={donors.length}
+                  onOpenLandingPage={() => setIsLandingViewOpen(true)}
                 />
               )}
 
