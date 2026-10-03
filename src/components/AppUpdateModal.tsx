@@ -1,24 +1,30 @@
 import { createPortal } from 'react-dom';
-import React from 'react';
-import { Sparkles, Download, ArrowUpCircle, X, ShieldAlert } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Download, ArrowUpCircle, X, ShieldAlert, Globe, CheckCircle2 } from 'lucide-react';
 import { appUpdateService, type AppUpdateConfig, CURRENT_APP_VERSION } from '../services/appUpdateService';
 
 interface AppUpdateModalProps {
   isOpen: boolean;
   updateConfig: AppUpdateConfig;
   onClose: () => void;
+  onOpenLandingPage?: () => void;
 }
 
 export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({
   isOpen,
   updateConfig,
-  onClose
+  onClose,
+  onOpenLandingPage
 }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!isOpen || typeof document === 'undefined') return null;
 
   const handleDownload = () => {
-    if (updateConfig.downloadUrl) {
-      window.open(updateConfig.downloadUrl, '_blank', 'noopener,noreferrer');
+    const targetUrl = updateConfig.apkDownloadUrl || updateConfig.downloadUrl || 'https://github.com/Md-Masud285/quicklife/releases';
+    setIsDownloading(true);
+    if (targetUrl) {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -30,7 +36,7 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({
   return createPortal(
     <div 
       className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn select-none"
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, touchAction: 'none' }}
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={(e) => {
         if (e.target === e.currentTarget && !updateConfig.forceUpdate) {
           handleRemindLater();
@@ -61,7 +67,7 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({
           {!updateConfig.forceUpdate && (
             <button
               onClick={handleRemindLater}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
               title="পরে আপডেট করুন"
             >
               <X className="w-4 h-4" />
@@ -83,6 +89,18 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({
           </div>
         </div>
 
+        {isDownloading && (
+          <div className="p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 space-y-1 animate-fadeIn">
+            <div className="flex items-center space-x-2 text-xs font-bold text-emerald-300">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 animate-spin" />
+              <span>ডাউনলোড শুরু হয়েছে...</span>
+            </div>
+            <p className="text-[10px] text-slate-300 leading-normal">
+              ডাউনলোড সম্পন্ন হলে আপনার ফোনের নোটিফিকেশন বার থেকে ট্যাপ করে <strong className="text-white">Install / Update</strong> দিন।
+            </p>
+          </div>
+        )}
+
         {updateConfig.forceUpdate && (
           <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-600/40 flex items-center space-x-2 text-[11px] text-amber-300 font-medium">
             <ShieldAlert className="w-4 h-4 shrink-0 text-amber-400" />
@@ -100,14 +118,29 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({
             <span>🚀 এখনই ডাউনলোড ও আপডেট করুন</span>
           </button>
 
-          {!updateConfig.forceUpdate && (
-            <button
-              onClick={handleRemindLater}
-              className="w-full py-2.5 rounded-2xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-[11px] font-semibold transition"
-            >
-              পরে আপডেট করব
-            </button>
-          )}
+          <div className="flex items-center space-x-2 pt-0.5">
+            {onOpenLandingPage && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenLandingPage();
+                }}
+                className="flex-1 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white text-[11px] font-semibold border border-slate-700/60 flex items-center justify-center space-x-1 transition cursor-pointer"
+              >
+                <Globe className="w-3.5 h-3.5 text-rose-400" />
+                <span>ওয়েব পেজ দেখুন</span>
+              </button>
+            )}
+
+            {!updateConfig.forceUpdate && (
+              <button
+                onClick={handleRemindLater}
+                className="flex-1 py-2 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-[11px] font-semibold transition cursor-pointer"
+              >
+                পরে করব
+              </button>
+            )}
+          </div>
         </div>
 
       </div>

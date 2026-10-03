@@ -443,6 +443,7 @@ export const App: React.FC = () => {
           isOpen={updateInfo.hasUpdate && !appUpdateService.isDismissed(updateInfo.updateConfig.latestVersion)}
           updateConfig={updateInfo.updateConfig}
           onClose={() => setUpdateInfo(prev => ({ ...prev, hasUpdate: false }))}
+          onOpenLandingPage={() => setIsLandingViewOpen(true)}
         />
       </div>
     </div>
