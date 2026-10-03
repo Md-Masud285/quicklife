@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HeartPulse, ShieldAlert, User } from 'lucide-react';
+import { HeartPulse, ShieldAlert, User, Download } from 'lucide-react';
 import type { UserProfile } from '../services/authService';
 
 interface NavbarProps {
@@ -8,6 +8,7 @@ interface NavbarProps {
   onOpenProfileModal: () => void;
   onOpenEmergencyModal: () => void;
   onOpenAdminLogin: () => void;
+  onOpenLandingPage?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -15,7 +16,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuthModal,
   onOpenProfileModal,
   onOpenEmergencyModal,
-  onOpenAdminLogin
+  onOpenAdminLogin,
+  onOpenLandingPage
 }) => {
   const [logoTapCount, setLogoTapCount] = useState(0);
 
@@ -46,8 +48,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logo Icon Box (Secret 4-tap here opens admin login) */}
           <div 
             onClick={handleLogoIconTap}
-            className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 via-red-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-500/20 active:scale-95 transition cursor-pointer select-none"
-            title="QuickLife"
+            className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 via-red-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-600/20 active:scale-95 transition cursor-pointer select-none"
+            title="QuickLife99"
           >
             <HeartPulse className="w-6 h-6 text-white animate-pulse pointer-events-none" />
           </div>
@@ -55,21 +57,34 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Brand Text Area */}
           <div onClick={handleBrandTextClick} className="cursor-pointer">
             <div className="flex items-center space-x-1.5">
-              <h1 className="text-lg font-black tracking-tight text-white m-0">QuickLife</h1>
+              <h1 className="text-lg font-black tracking-tight text-white m-0">
+                QuickLife<span className="text-rose-500">99</span>
+              </h1>
               
-              {/* PRO badge: Only visible for logged-in users, no click links */}
+              {/* PRO badge: Only visible for logged-in users */}
               {currentUser && (
                 <span className="text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 select-none">
                   PRO
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-slate-400 font-medium -mt-0.5">সব সেবা এক অ্যাপে</p>
+            <p className="text-[10px] text-slate-400 font-medium -mt-0.5">সব সেবা ও রক্তদান এক অ্যাপে</p>
           </div>
         </div>
 
-        {/* Action Controls: User Profile + 999 Help */}
-        <div className="flex items-center space-x-2">
+        {/* Action Controls: Landing/Download + User Profile + 999 Help */}
+        <div className="flex items-center space-x-1.5">
+          {onOpenLandingPage && (
+            <button
+              onClick={onOpenLandingPage}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-rose-400 hover:text-rose-300 text-[11px] font-bold border border-rose-500/30 flex items-center space-x-1 transition shadow-sm active:scale-95 cursor-pointer"
+              title="অ্যাপ ডাউনলোড ও ল্যান্ডিং পেজ"
+            >
+              <Download className="w-3.5 h-3.5 text-rose-500" />
+              <span className="hidden sm:inline">ডাউনলোড</span>
+            </button>
+          )}
+
           {currentUser ? (
             <button
               onClick={onOpenProfileModal}
@@ -97,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onOpenEmergencyModal}
-            className="flex items-center space-x-1 bg-red-600 hover:bg-red-500 text-white px-2.5 py-1.5 rounded-full text-xs font-bold shadow-md shadow-red-600/30 transition active:scale-95 pulse-emergency"
+            className="flex items-center space-x-1 bg-red-600 hover:bg-red-500 text-white px-2.5 py-1.5 rounded-full text-xs font-bold shadow-md shadow-red-600/30 transition active:scale-95 pulse-emergency cursor-pointer"
           >
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>৯৯৯</span>

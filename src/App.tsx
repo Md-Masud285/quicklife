@@ -9,6 +9,7 @@ import { HealthAlarmView } from './views/HealthAlarmView';
 import { StudyHubView } from './views/StudyHubView';
 import { AiToolsView } from './views/AiToolsView';
 import { AdminDashboardView } from './views/AdminDashboardView';
+import { LandingPageView } from './views/LandingPageView';
 import { EmergencyModal } from './components/EmergencyModal';
 import { AuthModal } from './components/AuthModal';
 import { CompleteProfileModal } from './components/CompleteProfileModal';
@@ -35,6 +36,13 @@ import { BellRing, Square } from 'lucide-react';
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState<boolean>(false);
+  const [isLandingViewOpen, setIsLandingViewOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('landing') === '1' || window.location.hash === '#landing') return true;
+    }
+    return false;
+  });
 
   // User Auth & Modals
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -239,6 +247,10 @@ export const App: React.FC = () => {
     setIsAdminViewOpen(false);
   };
 
+  if (isLandingViewOpen) {
+    return <LandingPageView onLaunchWebApp={() => setIsLandingViewOpen(false)} />;
+  }
+
   return (
     <div className="h-screen h-[100dvh] w-full bg-slate-950 text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-rose-500 selection:text-white">
       {/* Mobile Frame Container */}
@@ -252,6 +264,7 @@ export const App: React.FC = () => {
             onOpenProfileModal={() => setIsProfileModalOpen(true)}
             onOpenEmergencyModal={() => setIsEmergencyModalOpen(true)}
             onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
+            onOpenLandingPage={() => setIsLandingViewOpen(true)}
           />
         </header>
 
