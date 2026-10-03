@@ -39,9 +39,13 @@ export const App: React.FC = () => {
   const [isLandingViewOpen, setIsLandingViewOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      if (params.get('app') === '1' || window.location.hash === '#app') return false;
       if (params.get('landing') === '1' || window.location.hash === '#landing') return true;
+      // If running inside native Android/iOS Capacitor wrapper, open App directly; otherwise on Web/Vercel show Landing Page
+      const isNative = (window as any).Capacitor?.isNativePlatform?.();
+      return !isNative;
     }
-    return false;
+    return true;
   });
 
   // User Auth & Modals
@@ -248,7 +252,11 @@ export const App: React.FC = () => {
   };
 
   if (isLandingViewOpen) {
-    return <LandingPageView onLaunchWebApp={() => setIsLandingViewOpen(false)} />;
+    return (
+      <div className="w-full min-h-screen overflow-y-auto overflow-x-hidden bg-slate-950 text-slate-100">
+        <LandingPageView onLaunchWebApp={() => setIsLandingViewOpen(false)} />
+      </div>
+    );
   }
 
   return (

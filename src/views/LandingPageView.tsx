@@ -139,7 +139,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(downloadUrl)}&color=e11d48&bgcolor=0f172a`;
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} text-left selection:bg-rose-500 selection:text-white`}>
+    <div className={`w-full min-h-screen overflow-y-auto overflow-x-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} text-left selection:bg-rose-500 selection:text-white`}>
       
       {/* Top Floating Glow Backdrop */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-rose-600/15 via-indigo-600/10 to-transparent blur-3xl pointer-events-none -z-10" />

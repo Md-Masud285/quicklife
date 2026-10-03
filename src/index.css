@@ -18,11 +18,9 @@
     color: #f8fafc;
     font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Inter', -apple-system, sans-serif;
     overflow-x: hidden;
-    overscroll-behavior: none !important;
-    overscroll-behavior-y: none !important;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    user-select: none;
-    -webkit-user-select: none;
+    touch-action: pan-y;
   }
 
   input, textarea, [contenteditable="true"] {
@@ -73,9 +71,18 @@ button {
   line-height: 1.25;
 }
 
-/* 5. Custom scrollbar */
+/* 5. Custom subtle scrollbar */
 ::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-  display: none;
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(225, 29, 72, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(225, 29, 72, 0.8);
 }
