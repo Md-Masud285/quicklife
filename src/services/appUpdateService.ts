@@ -22,9 +22,9 @@ const STORAGE_KEY_DISMISSED_VERSION = 'quicklife_dismissed_update_version';
 export const DEFAULT_UPDATE_CONFIG: AppUpdateConfig = {
   latestVersion: '1.0.0',
   latestVersionCode: 100,
-  apkSize: '14.8 MB',
-  downloadUrl: 'https://github.com/Md-Masud285/quicklife/releases',
-  apkDownloadUrl: 'https://github.com/Md-Masud285/quicklife/releases',
+  apkSize: '4.37 MB',
+  downloadUrl: 'https://github.com/Md-Masud285/quicklife/releases/download/v1.0.0/QuickLife99-v1.0.0.apk',
+  apkDownloadUrl: 'https://github.com/Md-Masud285/quicklife/releases/download/v1.0.0/QuickLife99-v1.0.0.apk',
   releaseNotes: '• প্রথম অফিসিয়াল রিলিজ\n• রক্তদাতা ডিরেক্টরি\n• ডিজিটাল স্টাডি হাব ও সূত্রাবলি\n• মেডিসিন অ্যালার্ম সিস্টেম',
   forceUpdate: false,
   isActive: true,
