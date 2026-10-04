@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   BellRing, 
   Plus, 
@@ -63,15 +63,45 @@ export const HealthAlarmView: React.FC<HealthAlarmViewProps> = ({
   const [isContactModalOpen, setIsContactModalOpen] = useState<boolean>(false);
   const [editingContact, setEditingContact] = useState<PersonalEmergencyContact | null>(null);
 
-  // Notification permission state
+  // Notification permission state (auto-rechecks when user returns from phone settings)
   const [hasNotificationPermission, setHasNotificationPermission] = useState<boolean>(() => {
     return notificationService.checkPermission();
   });
 
+  useEffect(() => {
+    const updatePerm = () => {
+      setHasNotificationPermission(notificationService.checkPermission());
+    };
+
+    updatePerm();
+    window.addEventListener('focus', updatePerm);
+    document.addEventListener('visibilitychange', updatePerm);
+
+    return () => {
+      window.removeEventListener('focus', updatePerm);
+      document.removeEventListener('visibilitychange', updatePerm);
+    };
+  }, []);
+
   const handleRequestNotificationPermission = async () => {
     alarmSoundManager.initContext();
-    const granted = await notificationService.requestPermission();
-    setHasNotificationPermission(granted);
+    const status = notificationService.getPermissionStatus();
+
+    // 1. Try requesting browser / system permission
+    if (status === 'default') {
+      const granted = await notificationService.requestPermission();
+      setHasNotificationPermission(granted);
+      if (granted) return;
+    }
+
+    // 2. If already denied or prompt didn't show, open Phone App Settings directly
+    try {
+      if (typeof window !== 'undefined') {
+        window.location.href = 'intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;package=com.quicklife.app;end';
+      }
+    } catch (e) {
+      console.warn('Could not launch app settings:', e);
+    }
   };
 
   // Audio preview state
