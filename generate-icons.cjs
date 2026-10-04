@@ -89,10 +89,20 @@ async function applyIcons() {
     await sharp(buffer).resize(size, size).png().toFile(path.join(targetDir, 'ic_launcher.png'));
     await sharp(buffer).resize(size, size).png().toFile(path.join(targetDir, 'ic_launcher_round.png'));
     await sharp(buffer).resize(Math.round(size * 1.5), Math.round(size * 1.5)).png().toFile(path.join(targetDir, 'ic_launcher_foreground.png'));
-    console.log(`Generated ${size}x${size} icon for ${dir}`);
-  }
+  // 3. Ensure strings.xml has official QuickLife99 title
+  const valuesDir = path.join(resDir, 'values');
+  if (!fs.existsSync(valuesDir)) fs.mkdirSync(valuesDir, { recursive: true });
+  const stringsXml = `<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">QuickLife99</string>
+    <string name="title_activity_main">QuickLife99</string>
+    <string name="package_name">com.quicklife.app</string>
+    <string name="custom_url_scheme">com.quicklife.app</string>
+</resources>
+`;
+  fs.writeFileSync(path.join(valuesDir, 'strings.xml'), stringsXml, 'utf8');
 
-  console.log('ALL ANDROID LAUNCHER ICONS SUCCESSFULLY GENERATED!');
+  console.log('ALL ANDROID LAUNCHER ICONS AND STRINGS SUCCESSFULLY GENERATED!');
 }
 
 applyIcons().catch(console.error);

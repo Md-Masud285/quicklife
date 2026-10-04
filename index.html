@@ -31,10 +31,29 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Intelligent Cache Buster & Service Worker Management
+      const isNative = typeof window !== 'undefined' && ((window.Capacitor && window.Capacitor.isNativePlatform()) || window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost');
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch((err) => console.log('SW registration error:', err));
-        });
+        if (isNative) {
+          // Inside native Android APK: unregister old service workers and clear stale caches so APK updates load instantly
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (const registration of registrations) {
+              registration.unregister();
+            }
+          });
+          if ('caches' in window) {
+            caches.keys().then((names) => {
+              for (const name of names) {
+                caches.delete(name);
+              }
+            });
+          }
+        } else {
+          // Web / PWA mode
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch((err) => console.log('SW registration error:', err));
+          });
+        }
       }
     </script>
   </body>

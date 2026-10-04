@@ -1,18 +1,7 @@
-// QuickLife Offline-First Service Worker
-const CACHE_NAME = 'quicklife-offline-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/favicon.svg',
-  '/manifest.webmanifest'
-];
+// QuickLife Network-First Service Worker
+const CACHE_NAME = 'quicklife-v2';
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -31,22 +20,30 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Network-First Strategy for HTML / Navigation / Bundles
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  
+  // Always fetch fresh version from network, fallback to cache when offline
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networked = fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const cacheCopy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, cacheCopy);
-            });
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const cacheCopy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, cacheCopy);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
           }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || networked;
-    })
+          return new Response('Offline', { status: 503, statusText: 'Offline' });
+        });
+      })
   );
 });
