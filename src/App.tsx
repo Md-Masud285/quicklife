@@ -30,6 +30,7 @@ import { authService, type UserProfile } from './services/authService';
 import { appUpdateService, type AppUpdateConfig } from './services/appUpdateService';
 import { notificationService } from './services/notificationService';
 import { AppUpdateModal } from './components/AppUpdateModal';
+import { NotificationPermissionModal } from './components/NotificationPermissionModal';
 import { alarmSoundManager } from './utils/audioAlarm';
 import { normalizeToMinutes } from './utils/timeUtils';
 import { BellRing, Square } from 'lucide-react';
@@ -56,6 +57,15 @@ export const App: React.FC = () => {
   const [isCompleteProfileModalOpen, setIsCompleteProfileModalOpen] = useState<boolean>(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
   const [isAdminViewOpen, setIsAdminViewOpen] = useState<boolean>(false);
+  // Notification & Alarm Permission Prompt state
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    // Don't show if already granted
+    if (notificationService.checkPermission()) return false;
+    // Don't show if 2-hour remind later is active
+    if (notificationService.isRemindLaterActive()) return false;
+    return true;
+  });
 
 
   // Core Data States
@@ -509,6 +519,13 @@ export const App: React.FC = () => {
           updateConfig={updateInfo.updateConfig}
           onClose={() => setUpdateInfo(prev => ({ ...prev, hasUpdate: false }))}
           onOpenLandingPage={handleOpenLandingPage}
+        />
+
+        {/* First-Launch / 2-Hour Recurring Notification & Alarm Permission Modal */}
+        <NotificationPermissionModal
+          isOpen={isPermissionModalOpen}
+          onClose={() => setIsPermissionModalOpen(false)}
+          onPermissionGranted={() => setIsPermissionModalOpen(false)}
         />
       </div>
     </div>

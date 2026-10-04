@@ -18,10 +18,12 @@ import {
   Mic,
   Music,
   Clock,
-  MessageSquare
+  MessageSquare,
+  BellOff
 } from "lucide-react";
 import type { MedicineReminder, PersonalEmergencyContact } from "../types";
 import { alarmSoundManager } from "../utils/audioAlarm";
+import { notificationService } from "../services/notificationService";
 import { AdBanner } from "../components/AdBanner";
 import { DynamicAdRenderer } from '../components/DynamicAdRenderer';
 
@@ -60,6 +62,17 @@ export const HealthAlarmView: React.FC<HealthAlarmViewProps> = ({
   
   const [isContactModalOpen, setIsContactModalOpen] = useState<boolean>(false);
   const [editingContact, setEditingContact] = useState<PersonalEmergencyContact | null>(null);
+
+  // Notification permission state
+  const [hasNotificationPermission, setHasNotificationPermission] = useState<boolean>(() => {
+    return notificationService.checkPermission();
+  });
+
+  const handleRequestNotificationPermission = async () => {
+    alarmSoundManager.initContext();
+    const granted = await notificationService.requestPermission();
+    setHasNotificationPermission(granted);
+  };
 
   // Audio preview state
   const [isPlayingPreview, setIsPlayingPreview] = useState<boolean>(false);
@@ -417,6 +430,27 @@ export const HealthAlarmView: React.FC<HealthAlarmViewProps> = ({
             <span>ওষুধ যোগ করুন</span>
           </button>
         </div>
+
+        {/* Notification Permission Indicator Banner */}
+        {!hasNotificationPermission && (
+          <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-2 text-left">
+            <div className="flex items-center space-x-2 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <BellOff className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-amber-300">নোটিফিকেশন বন্ধ রয়েছে</div>
+                <div className="text-[10px] text-amber-200/80 truncate">অ্যালার্ম ও ১০ মিনিট আগের রিমাইন্ডার পেতে পারমিশন দিন</div>
+              </div>
+            </div>
+            <button
+              onClick={handleRequestNotificationPermission}
+              className="shrink-0 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs shadow transition active:scale-95"
+            >
+              চালু করুন
+            </button>
+          </div>
+        )}
 
         {medicines.length > 0 ? (
           <div className="space-y-2.5 pt-1">

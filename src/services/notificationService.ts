@@ -1,5 +1,7 @@
 // Native Notification, Background Alarm & Vibration Service
 
+const REMIND_LATER_KEY = 'quicklife_notification_remind_later';
+
 class NotificationService {
   private permissionGranted: boolean = false;
 
@@ -15,6 +17,13 @@ class NotificationService {
     return this.permissionGranted;
   }
 
+  public getPermissionStatus(): NotificationPermission | 'unsupported' {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return 'unsupported';
+    }
+    return Notification.permission;
+  }
+
   public async requestPermission(): Promise<boolean> {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       return false;
@@ -23,10 +32,45 @@ class NotificationService {
     try {
       const permission = await Notification.requestPermission();
       this.permissionGranted = permission === 'granted';
+      if (this.permissionGranted) {
+        localStorage.removeItem(REMIND_LATER_KEY);
+      }
       return this.permissionGranted;
     } catch (err) {
       console.warn('Notification permission request error:', err);
       return false;
+    }
+  }
+
+  /**
+   * Check if user asked to be reminded later and 2 hours haven't passed yet
+   */
+  public isRemindLaterActive(): boolean {
+    try {
+      const stored = localStorage.getItem(REMIND_LATER_KEY);
+      if (!stored) return false;
+      const expireTime = parseInt(stored, 10);
+      if (isNaN(expireTime)) return false;
+      if (Date.now() < expireTime) {
+        return true; // Still within 2-hour window
+      }
+      // Expired, clear it so prompt shows again
+      localStorage.removeItem(REMIND_LATER_KEY);
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Postpone permission reminder popup for 2 hours
+   */
+  public setRemindLater(hours: number = 2) {
+    try {
+      const expireTime = Date.now() + hours * 60 * 60 * 1000;
+      localStorage.setItem(REMIND_LATER_KEY, expireTime.toString());
+    } catch (e) {
+      console.warn('Could not store remind later preference:', e);
     }
   }
 

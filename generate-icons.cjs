@@ -105,7 +105,47 @@ async function applyIcons() {
 `;
   fs.writeFileSync(path.join(valuesDir, 'strings.xml'), stringsXml, 'utf8');
 
-  console.log('ALL ANDROID LAUNCHER ICONS AND STRINGS SUCCESSFULLY GENERATED!');
+  // 4. Inject Full Android Native Alarms, Full-Screen, Lock Screen & Notification Permissions
+  const manifestPath = path.join(__dirname, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  if (fs.existsSync(manifestPath)) {
+    let manifest = fs.readFileSync(manifestPath, 'utf8');
+    const permissionsToAdd = [
+      'android.permission.POST_NOTIFICATIONS',
+      'android.permission.SCHEDULE_EXACT_ALARM',
+      'android.permission.USE_EXACT_ALARM',
+      'android.permission.WAKE_LOCK',
+      'android.permission.VIBRATE',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+      'android.permission.USE_FULL_SCREEN_INTENT',
+      'android.permission.RECEIVE_BOOT_COMPLETED',
+      'android.permission.FOREGROUND_SERVICE',
+      'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+      'android.permission.ACCESS_NETWORK_STATE',
+      'android.permission.INTERNET'
+    ];
+
+    let addedCount = 0;
+    for (const perm of permissionsToAdd) {
+      const permTag = `<uses-permission android:name="${perm}" />`;
+      if (!manifest.includes(perm)) {
+        manifest = manifest.replace('<application', `    ${permTag}\n    <application`);
+        addedCount++;
+      }
+    }
+
+    if (manifest.includes('android:name=".MainActivity"') && !manifest.includes('showWhenLocked')) {
+      manifest = manifest.replace(
+        'android:name=".MainActivity"',
+        'android:name=".MainActivity"\n            android:showWhenLocked="true"\n            android:turnScreenOn="true"'
+      );
+    }
+
+    fs.writeFileSync(manifestPath, manifest, 'utf8');
+    console.log(`Injected ${addedCount} native permissions & lockscreen flags into AndroidManifest.xml`);
+  }
+
+  console.log('ALL ANDROID LAUNCHER ICONS, STRINGS AND NATIVE PERMISSIONS SUCCESSFULLY CONFIGURED!');
 }
 
 applyIcons().catch(console.error);
+
