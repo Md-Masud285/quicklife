@@ -51,17 +51,18 @@ export function setMyDonorProfile(profile: BloodDonor | null) {
   }
 }
 
-// Personal Emergency Contacts
-export function getPersonalEmergencyContacts(): PersonalEmergencyContact[] {
+// Personal Emergency Contacts (Isolated per user)
+export function getPersonalEmergencyContacts(userId?: string): PersonalEmergencyContact[] {
   try {
-    const raw = localStorage.getItem(KEYS.EMERGENCY_CONTACTS);
+    const key = userId ? `${KEYS.EMERGENCY_CONTACTS}_${userId}` : KEYS.EMERGENCY_CONTACTS;
+    const raw = localStorage.getItem(key);
     if (!raw) {
       const defaultContacts: PersonalEmergencyContact[] = [
         { id: '1', category: 'ambulance', title: 'লোকাল অ্যাম্বুলেন্স', phone: '01700000000', locationOrThana: 'নিজ এলাকা' },
         { id: '2', category: 'fire', title: 'নিকটস্থ ফায়ার স্টেশন', phone: '01800000000', locationOrThana: 'নিজ থানা' },
         { id: '3', category: 'thana', title: 'থানার ভারপ্রাপ্ত কর্মকর্তা (OC)', phone: '01900000000', locationOrThana: 'নিজ থানা' }
       ];
-      localStorage.setItem(KEYS.EMERGENCY_CONTACTS, JSON.stringify(defaultContacts));
+      localStorage.setItem(key, JSON.stringify(defaultContacts));
       return defaultContacts;
     }
     return JSON.parse(raw);
@@ -70,8 +71,12 @@ export function getPersonalEmergencyContacts(): PersonalEmergencyContact[] {
   }
 }
 
-export function savePersonalEmergencyContacts(contacts: PersonalEmergencyContact[]) {
-  localStorage.setItem(KEYS.EMERGENCY_CONTACTS, JSON.stringify(contacts));
+export function savePersonalEmergencyContacts(contacts: PersonalEmergencyContact[], userId?: string) {
+  const key = userId ? `${KEYS.EMERGENCY_CONTACTS}_${userId}` : KEYS.EMERGENCY_CONTACTS;
+  localStorage.setItem(key, JSON.stringify(contacts));
+  if (typeof window !== 'undefined') {
+    setTimeout(() => githubSyncService.pushToCloud(), 100);
+  }
 }
 
 // Medicine Reminders

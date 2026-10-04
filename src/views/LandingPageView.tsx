@@ -94,6 +94,10 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
       faq3A: 'আপনাকে আর নতুন লিংক খুঁজতে হবে না! অ্যাপ ওপেন করলেই স্বয়ংক্রিয়ভাবে ইন-অ্যাপ আপডেট নোটিফিকেশন পাবেন এবং ১-ক্লিকেই আপডেট হয়ে যাবে।',
       faq4Q: 'রক্তদাতা হিসেবে কীভাবে নিজের নাম যুক্ত করব?',
       faq4A: 'অ্যাপে প্রবেশ করে আপনার রক্তের গ্রুপ ও জেলা দিয়ে ১ মিনিটে প্রোফাইল তৈরি করলেই আপনি রক্তদাতা তালিকায় যুক্ত হয়ে যাবেন।',
+      faq5Q: 'মোবাইলে নোটিফিকেশন ও ব্যাকগ্রাউন্ড মেডিসিন অ্যালার্ম কিভাবে সবসময় সচল রাখবেন?',
+      faq5A: 'অ্যাপ প্রথমবার ওপেন করলে নোটিফিকেশন পারমিশন পপআপ থেকে "Allow" করুন। Xiaomi (MIUI/HyperOS), Realme বা Samsung ফোনে অ্যাপ ইনফো সেটিংস থেকে "Show on Lock screen" এবং "Open new windows in background" অন রাখুন এবং ব্যাটারি সেভারে "No restrictions" দিন। এতে ফোন লক বা স্ক্রিন বন্ধ থাকলেও ১০ মিনিট আগের আগাম সতর্কবার্তা ও সঠিক সময়ে অ্যালার্ম রিংটোন বেজে উঠবে।',
+      faq6Q: '৯৯৯ জরুরি সেবা ও নিজের থানার ওসি/অ্যাম্বুলেন্স নম্বর কীভাবে সেভ করব?',
+      faq6A: 'QuickLife99 অ্যাপে বিনামূল্যে লগইন করার পর "স্বাস্থ্য ও অ্যালার্ম" অথবা ৯৯৯ পপআপ থেকে আপনার এলাকার ওসি, লোকাল অ্যাম্বুলেন্স ও ফায়ার সার্ভিসের নম্বর সেভ করে রাখতে পারবেন। এগুলো সরাসরি আপনার নিজস্ব আইডিতে সেভ থাকবে এবং বিপদের মুহূর্তে ১ ক্লিকেই সরাসরি কল যাবে।',
       footerText: '© ২০২৬ QuickLife99 • মানুষের জীবন বাঁচাতে ও সেবা প্রদানে নিবেদিত একটি উন্মুক্ত প্ল্যাটফর্ম।',
       emergencyHelpline: 'জাতীয় জরুরি সেবা: ৯৯৯',
     },
@@ -135,6 +139,10 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
       faq3A: 'Our smart In-App Auto Update engine will notify you directly inside the app with 1-click update installation.',
       faq4Q: 'How can I register as a voluntary blood donor?',
       faq4A: 'Simply open the app, complete your profile with blood group and district to join the voluntary donor community.',
+      faq5Q: 'How to keep medicine alarms & background notifications running properly on Android?',
+      faq5A: 'Grant notification permission when prompted on first launch. On Xiaomi (MIUI/HyperOS), Realme or Samsung devices, enable "Show on Lock screen" and "Open new windows in background" in App Info settings, and set battery saver to "No restrictions". This ensures alarms and 10-minute advance reminders ring accurately on time.',
+      faq6Q: 'How to save local Police OC and Ambulance emergency numbers?',
+      faq6A: 'Log in to your free QuickLife99 account, go to Health & Alarm or Emergency 999 popup to save your local station and hospital numbers. They will remain securely saved to your personal profile for instant 1-tap dialing in any emergency.',
       footerText: '© 2026 QuickLife99 • Dedicated to saving lives and providing essential daily digital tools.',
       emergencyHelpline: 'National Emergency Helpline: 999',
     }
@@ -597,7 +605,9 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
               { q: t.faq1Q, a: t.faq1A },
               { q: t.faq2Q, a: t.faq2A },
               { q: t.faq3Q, a: t.faq3A },
-              { q: t.faq4Q, a: t.faq4A }
+              { q: t.faq4Q, a: t.faq4A },
+              { q: t.faq5Q, a: t.faq5A },
+              { q: t.faq6Q, a: t.faq6A }
             ].map((faq, idx) => (
               <div
                 key={idx}

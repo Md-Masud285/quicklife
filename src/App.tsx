@@ -288,7 +288,7 @@ export const App: React.FC = () => {
   // Handlers for Emergency Contacts
   const handleSaveEmergencyContacts = (contacts: PersonalEmergencyContact[]) => {
     setEmergencyContacts(contacts);
-    savePersonalEmergencyContacts(contacts);
+    savePersonalEmergencyContacts(contacts, currentUser?.id);
   };
 
   // Handlers for Medicines
@@ -300,6 +300,7 @@ export const App: React.FC = () => {
   // Auth Callbacks
   const handleLoginSuccess = (user: UserProfile) => {
     setCurrentUser(user);
+    setEmergencyContacts(getPersonalEmergencyContacts(user.id));
     if (user.role === 'admin') {
       setIsAdminViewOpen(true);
     }
@@ -307,12 +308,14 @@ export const App: React.FC = () => {
 
   const handleAdminLoginSuccess = (adminUser: UserProfile) => {
     setCurrentUser(adminUser);
+    setEmergencyContacts(getPersonalEmergencyContacts(adminUser.id));
     setIsAdminViewOpen(true);
   };
 
   const handleLogout = () => {
     authService.logout();
     setCurrentUser(null);
+    setEmergencyContacts(getPersonalEmergencyContacts());
     setIsAdminViewOpen(false);
   };
 
@@ -439,6 +442,9 @@ export const App: React.FC = () => {
           isOpen={isEmergencyModalOpen}
           onClose={() => setIsEmergencyModalOpen(false)}
           personalContacts={emergencyContacts}
+          currentUser={currentUser}
+          onRequireLogin={() => setIsAuthModalOpen(true)}
+          onOpenHealthTab={() => setActiveTab('health')}
         />
 
         <AuthModal

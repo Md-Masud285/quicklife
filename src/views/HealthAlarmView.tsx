@@ -252,6 +252,11 @@ export const HealthAlarmView: React.FC<HealthAlarmViewProps> = ({
 
   // Open Contact Edit
   const handleOpenContactModal = (contact?: PersonalEmergencyContact) => {
+    if (!currentUser) {
+      if (onRequireLogin) onRequireLogin();
+      return;
+    }
+
     if (contact) {
       setEditingContact(contact);
       setContactCategory(contact.category);
@@ -272,6 +277,11 @@ export const HealthAlarmView: React.FC<HealthAlarmViewProps> = ({
   const handleSaveContact = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactTitle || !contactPhone) return;
+
+    if (!currentUser) {
+      if (onRequireLogin) onRequireLogin();
+      return;
+    }
 
     if (editingContact) {
       const updated = emergencyContacts.map(c => 
@@ -294,6 +304,10 @@ export const HealthAlarmView: React.FC<HealthAlarmViewProps> = ({
   };
 
   const handleDeleteContact = (id: string) => {
+    if (!currentUser) {
+      if (onRequireLogin) onRequireLogin();
+      return;
+    }
     if (confirm("আপনি কি এই জরুরি নম্বরটি মুছে ফেলতে চান?")) {
       onSaveEmergencyContacts(emergencyContacts.filter(c => c.id !== id));
     }
