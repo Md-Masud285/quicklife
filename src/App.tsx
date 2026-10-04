@@ -1,5 +1,5 @@
 import { githubSyncService } from './services/githubSyncService';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import type { ActiveTab } from './components/BottomNav';
@@ -31,6 +31,7 @@ import { appUpdateService, type AppUpdateConfig } from './services/appUpdateServ
 import { notificationService } from './services/notificationService';
 import { AppUpdateModal } from './components/AppUpdateModal';
 import { alarmSoundManager } from './utils/audioAlarm';
+import { normalizeToMinutes } from './utils/timeUtils';
 import { BellRing, Square } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -126,42 +127,70 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Background Alarm Clock & 10-Minute Pre-Reminder Checker (Runs every second)
+  // Audio context warmup on first user interaction
   useEffect(() => {
-    const timer = setInterval(() => {
+    const unlockAudioAndNotification = () => {
+      alarmSoundManager.initContext();
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
+      window.removeEventListener('click', unlockAudioAndNotification);
+      window.removeEventListener('touchstart', unlockAudioAndNotification);
+    };
+
+    window.addEventListener('click', unlockAudioAndNotification, { once: true });
+    window.addEventListener('touchstart', unlockAudioAndNotification, { once: true });
+
+    return () => {
+      window.removeEventListener('click', unlockAudioAndNotification);
+      window.removeEventListener('touchstart', unlockAudioAndNotification);
+    };
+  }, []);
+
+  // Minute tracker refs to guarantee alarms fire exactly once per target minute without skipping
+  const lastAlarmMinuteChecked = useRef<number | null>(null);
+  const lastPreReminderMinuteChecked = useRef<number | null>(null);
+
+  // Background Alarm Clock & 10-Minute Pre-Reminder Checker
+  useEffect(() => {
+    const checkAlarms = () => {
       const now = new Date();
-      const currentHours = now.getHours().toString().padStart(2, '0');
-      const currentMinutes = now.getMinutes().toString().padStart(2, '0');
-      const currentTimeStr = `${currentHours}:${currentMinutes}`;
-      const currentSeconds = now.getSeconds();
+      const currentMinuteOfDay = now.getHours() * 60 + now.getMinutes();
 
-      if (currentSeconds === 0) {
-        // 1. Check 10-Minute Advance Pre-Reminder Notification
-        const in10Min = new Date(now.getTime() + 10 * 60 * 1000);
-        const preHours = in10Min.getHours().toString().padStart(2, '0');
-        const preMinutes = in10Min.getMinutes().toString().padStart(2, '0');
-        const preTimeStr = `${preHours}:${preMinutes}`;
-
-        const preMatch = medicines.find(m => {
-          if (!m.isEnabled) return false;
+      // 1. Check 10-Minute Advance Pre-Reminder Notification
+      const preTargetMinute = (currentMinuteOfDay + 10) % 1440;
+      if (lastPreReminderMinuteChecked.current !== currentMinuteOfDay) {
+        medicines.forEach(m => {
+          if (!m.isEnabled) return;
           const allTimes = m.times && m.times.length > 0 ? m.times : (m.time ? [m.time] : []);
-          return allTimes.includes(preTimeStr);
-        });
-        if (preMatch) {
-          notificationService.showPreAlarmNotification(
-            preMatch.medicineName,
-            preMatch.dosage || '১ ডোজ',
-            preMatch.mealTime,
-            preMatch.id
-          );
-        }
+          const hasPreMatch = allTimes.some(t => {
+            const parsed = normalizeToMinutes(t);
+            return parsed !== null && parsed === preTargetMinute;
+          });
 
-        // 2. Exact-Time Main Alarm Trigger
+          if (hasPreMatch) {
+            notificationService.showPreAlarmNotification(
+              m.medicineName,
+              m.dosage || '১ ডোজ',
+              m.mealTime,
+              m.id
+            );
+          }
+        });
+        lastPreReminderMinuteChecked.current = currentMinuteOfDay;
+      }
+
+      // 2. Exact-Time Main Alarm Trigger
+      if (lastAlarmMinuteChecked.current !== currentMinuteOfDay) {
         const match = medicines.find(m => {
           if (!m.isEnabled) return false;
           const allTimes = m.times && m.times.length > 0 ? m.times : (m.time ? [m.time] : []);
-          return allTimes.includes(currentTimeStr);
+          return allTimes.some(t => {
+            const parsed = normalizeToMinutes(t);
+            return parsed !== null && parsed === currentMinuteOfDay;
+          });
         });
+
         if (match && !ringingMedicine) {
           setRingingMedicine(match);
 
@@ -188,9 +217,13 @@ export const App: React.FC = () => {
             alarmSoundManager.playDefaultAlarm();
           }
         }
+        lastAlarmMinuteChecked.current = currentMinuteOfDay;
       }
+    };
 
-    }, 1000);
+    // Run immediately and every 1000ms
+    checkAlarms();
+    const timer = setInterval(checkAlarms, 1000);
 
     return () => clearInterval(timer);
   }, [medicines, ringingMedicine]);
