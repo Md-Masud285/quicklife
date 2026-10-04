@@ -126,7 +126,7 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Background Alarm Clock Checker (Runs every second)
+  // Background Alarm Clock & 10-Minute Pre-Reminder Checker (Runs every second)
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -136,6 +136,27 @@ export const App: React.FC = () => {
       const currentSeconds = now.getSeconds();
 
       if (currentSeconds === 0) {
+        // 1. Check 10-Minute Advance Pre-Reminder Notification
+        const in10Min = new Date(now.getTime() + 10 * 60 * 1000);
+        const preHours = in10Min.getHours().toString().padStart(2, '0');
+        const preMinutes = in10Min.getMinutes().toString().padStart(2, '0');
+        const preTimeStr = `${preHours}:${preMinutes}`;
+
+        const preMatch = medicines.find(m => {
+          if (!m.isEnabled) return false;
+          const allTimes = m.times && m.times.length > 0 ? m.times : (m.time ? [m.time] : []);
+          return allTimes.includes(preTimeStr);
+        });
+        if (preMatch) {
+          notificationService.showPreAlarmNotification(
+            preMatch.medicineName,
+            preMatch.dosage || '১ ডোজ',
+            preMatch.mealTime,
+            preMatch.id
+          );
+        }
+
+        // 2. Exact-Time Main Alarm Trigger
         const match = medicines.find(m => {
           if (!m.isEnabled) return false;
           const allTimes = m.times && m.times.length > 0 ? m.times : (m.time ? [m.time] : []);
@@ -148,7 +169,8 @@ export const App: React.FC = () => {
           notificationService.showAlarmNotification(
             match.medicineName,
             match.dosage || '১ ডোজ',
-            match.mealTime
+            match.mealTime,
+            match.id
           );
 
           const mode = match.soundMode ?? ((match as any).soundType === 'custom' ? 'custom' : 'default');
@@ -251,6 +273,16 @@ export const App: React.FC = () => {
     setIsAdminViewOpen(false);
   };
 
+  const handleOpenLandingPage = () => {
+    const isNative = typeof window !== 'undefined' && ((window as any).Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:');
+    if (isNative) {
+      // In native Android APK: open official link in phone's default external browser (Chrome, etc.)
+      window.open('https://quicklife99.vercel.app', '_system');
+    } else {
+      setIsLandingViewOpen(true);
+    }
+  };
+
   if (isLandingViewOpen) {
     return (
       <div className="w-full min-h-screen overflow-y-auto overflow-x-hidden bg-slate-950 text-slate-100">
@@ -272,7 +304,7 @@ export const App: React.FC = () => {
             onOpenProfileModal={() => setIsProfileModalOpen(true)}
             onOpenEmergencyModal={() => setIsEmergencyModalOpen(true)}
             onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
-            onOpenLandingPage={() => setIsLandingViewOpen(true)}
+            onOpenLandingPage={handleOpenLandingPage}
           />
         </header>
 
@@ -318,7 +350,7 @@ export const App: React.FC = () => {
                   medicines={medicines}
                   onOpenEmergencyModal={() => setIsEmergencyModalOpen(true)}
                   donorsCount={donors.length}
-                  onOpenLandingPage={() => setIsLandingViewOpen(true)}
+                  onOpenLandingPage={handleOpenLandingPage}
                 />
               )}
 
@@ -443,7 +475,7 @@ export const App: React.FC = () => {
           isOpen={updateInfo.hasUpdate && !appUpdateService.isDismissed(updateInfo.updateConfig.latestVersion)}
           updateConfig={updateInfo.updateConfig}
           onClose={() => setUpdateInfo(prev => ({ ...prev, hasUpdate: false }))}
-          onOpenLandingPage={() => setIsLandingViewOpen(true)}
+          onOpenLandingPage={handleOpenLandingPage}
         />
       </div>
     </div>
