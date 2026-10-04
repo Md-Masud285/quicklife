@@ -56,6 +56,16 @@ export const NotificationPermissionModal: React.FC<NotificationPermissionModalPr
     }
   };
 
+  const handleOpenSettings = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.location.href = 'intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;package=com.quicklife.app;end';
+      }
+    } catch (e) {
+      console.warn('Could not open settings:', e);
+    }
+  };
+
   const handleRemindIn2Hours = () => {
     notificationService.setRemindLater(2);
     onClose();
@@ -153,13 +163,21 @@ export const NotificationPermissionModal: React.FC<NotificationPermissionModalPr
             </button>
 
             {showAndroidGuide && (
-              <div className="p-2.5 rounded-xl bg-slate-950 text-[11px] text-slate-300 space-y-1.5 border border-slate-800 animate-fadeIn">
-                <p className="font-semibold text-amber-300">ফোনের সেটিংস থেকে অন করুন:</p>
+              <div className="p-3 rounded-2xl bg-slate-950 text-[11px] text-slate-300 space-y-2 border border-slate-800 animate-fadeIn">
+                <p className="font-semibold text-amber-300">ফোনের অ্যাপ সেটিংস থেকে অন করুন:</p>
                 <ul className="list-disc list-inside space-y-1 text-slate-400">
-                  <li><strong className="text-slate-200">Show on Lock screen:</strong> চালু (Allow) করুন</li>
-                  <li><strong className="text-slate-200">Open new windows in background:</strong> চালু করুন</li>
+                  <li><strong className="text-slate-200">Show on Lock screen:</strong> Allow করুন</li>
+                  <li><strong className="text-slate-200">Open new windows in background:</strong> Allow করুন</li>
                   <li><strong className="text-slate-200">Battery Saver:</strong> No restrictions সিলেক্ট করুন</li>
                 </ul>
+                <button
+                  type="button"
+                  onClick={handleOpenSettings}
+                  className="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 text-xs font-semibold py-1.5 px-3 rounded-xl border border-amber-500/30 flex items-center justify-center space-x-1.5 transition active:scale-95"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                  <span>সরাসরি অ্যাপ সেটিংস পেজ খুলুন</span>
+                </button>
               </div>
             )}
 
