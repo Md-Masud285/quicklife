@@ -89,6 +89,9 @@ async function applyIcons() {
     await sharp(buffer).resize(size, size).png().toFile(path.join(targetDir, 'ic_launcher.png'));
     await sharp(buffer).resize(size, size).png().toFile(path.join(targetDir, 'ic_launcher_round.png'));
     await sharp(buffer).resize(Math.round(size * 1.5), Math.round(size * 1.5)).png().toFile(path.join(targetDir, 'ic_launcher_foreground.png'));
+    console.log(`Generated ${size}x${size} icon for ${dir}`);
+  }
+
   // 3. Ensure strings.xml has official QuickLife99 title
   const valuesDir = path.join(resDir, 'values');
   if (!fs.existsSync(valuesDir)) fs.mkdirSync(valuesDir, { recursive: true });
