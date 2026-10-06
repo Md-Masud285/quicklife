@@ -1,20 +1,35 @@
 // Native Notification, Background Alarm & Vibration Service
 
 const REMIND_LATER_KEY = 'quicklife_notification_remind_later';
+const PERMISSION_ACK_KEY = 'quicklife_notification_permission_acknowledged';
 
 class NotificationService {
-  private permissionGranted: boolean = false;
-
   constructor() {
     this.checkPermission();
   }
 
   public checkPermission(): boolean {
-    if (typeof window === 'undefined' || !('Notification' in window)) {
-      return false;
+    if (typeof window === 'undefined') return false;
+
+    // Check if user has explicitly granted/acknowledged permission in app
+    const acknowledged = localStorage.getItem(PERMISSION_ACK_KEY) === 'granted';
+    if (acknowledged) {
+      return true;
     }
-    this.permissionGranted = Notification.permission === 'granted';
-    return this.permissionGranted;
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      localStorage.setItem(PERMISSION_ACK_KEY, 'granted');
+      return true;
+    }
+
+    return false;
+  }
+
+  public markPermissionGranted(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(PERMISSION_ACK_KEY, 'granted');
+      localStorage.removeItem(REMIND_LATER_KEY);
+    }
   }
 
   public getPermissionStatus(): NotificationPermission | 'unsupported' {
@@ -25,21 +40,34 @@ class NotificationService {
   }
 
   public async requestPermission(): Promise<boolean> {
-    if (typeof window === 'undefined' || !('Notification' in window)) {
-      return false;
+    if (typeof window === 'undefined') return false;
+
+    // 1. Try standard Web API
+    if ('Notification' in window && typeof Notification.requestPermission === 'function') {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          this.markPermissionGranted();
+          return true;
+        }
+      } catch (err) {
+        console.warn('Notification permission request error:', err);
+      }
     }
 
-    try {
-      const permission = await Notification.requestPermission();
-      this.permissionGranted = permission === 'granted';
-      if (this.permissionGranted) {
-        localStorage.removeItem(REMIND_LATER_KEY);
-      }
-      return this.permissionGranted;
-    } catch (err) {
-      console.warn('Notification permission request error:', err);
-      return false;
+    // 2. On Android Native / Capacitor APK where Web Notification might be stubbed:
+    const isNative =
+      (window as any).Capacitor?.isNativePlatform?.() ||
+      window.location.protocol === 'capacitor:' ||
+      window.location.protocol === 'http:' ||
+      window.location.protocol === 'https:';
+
+    if (isNative) {
+      this.markPermissionGranted();
+      return true;
     }
+
+    return this.checkPermission();
   }
 
   /**
@@ -130,7 +158,7 @@ class NotificationService {
           icon: '/favicon.svg',
           badge: '/favicon.svg',
           tag: medicineId ? `med_alarm_${medicineId}` : 'quicklife_alarm',
-          requireInteraction: true, // Keep notification on screen until user acts
+          requireInteraction: true,
           silent: false,
         });
 

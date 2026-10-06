@@ -66,6 +66,12 @@ export const NotificationPermissionModal: React.FC<NotificationPermissionModalPr
     }
   };
 
+  const handleAlreadyEnabled = () => {
+    notificationService.markPermissionGranted();
+    if (onPermissionGranted) onPermissionGranted();
+    onClose();
+  };
+
   const handleRemindIn2Hours = () => {
     notificationService.setRemindLater(2);
     onClose();
@@ -199,8 +205,16 @@ export const NotificationPermissionModal: React.FC<NotificationPermissionModalPr
               </button>
 
               <button
+                onClick={handleAlreadyEnabled}
+                className="w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-semibold py-2 px-3 rounded-2xl text-xs border border-emerald-500/30 active:scale-[0.98] transition flex items-center justify-center space-x-1.5"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>আমি অলরেডি পারমিশন অন করেছি (সম্পন্ন)</span>
+              </button>
+
+              <button
                 onClick={handleRemindIn2Hours}
-                className="w-full bg-slate-800 hover:bg-slate-700/80 text-slate-400 hover:text-slate-200 font-semibold py-2.5 px-4 rounded-2xl text-xs active:scale-[0.98] transition flex items-center justify-center space-x-1.5"
+                className="w-full bg-slate-800 hover:bg-slate-700/80 text-slate-400 hover:text-slate-200 font-semibold py-2 px-4 rounded-2xl text-xs active:scale-[0.98] transition flex items-center justify-center space-x-1.5"
               >
                 <Clock className="w-3.5 h-3.5" />
                 <span>২ ঘণ্টা পর মনে করিয়ে দিন (Remind in 2h)</span>

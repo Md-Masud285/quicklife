@@ -5,6 +5,8 @@ class AlarmSoundManager {
   private currentAudio: HTMLAudioElement | null = null;
   private isRinging: boolean = false;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
+  private alarmInterval: any = null;
+  private vibrationInterval: any = null;
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -36,54 +38,97 @@ class AlarmSoundManager {
     }
   }
 
-  // Play synthetic gentle medical chime
+  public startContinuousVibration() {
+    this.stopContinuousVibration();
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      const vib = () => {
+        try {
+          navigator.vibrate([800, 300, 800, 300, 1000]);
+        } catch {
+          // ignore
+        }
+      };
+      vib();
+      this.vibrationInterval = setInterval(vib, 2800);
+    }
+  }
+
+  public stopContinuousVibration() {
+    if (this.vibrationInterval) {
+      clearInterval(this.vibrationInterval);
+      this.vibrationInterval = null;
+    }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(0);
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  // Play synthetic gentle/strong medical chime with immediate 0ms start & continuous loop
   public playDefaultAlarm(): () => void {
     this.stopAlarm();
     this.initContext();
-    if (!this.audioCtx) return () => {};
-
     this.isRinging = true;
-    const ctx = this.audioCtx;
+    this.startContinuousVibration();
 
     const playTone = (freq: number, startTime: number, duration: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
+      if (!this.audioCtx) return;
+      try {
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.4, startTime + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      } catch (e) {
+        console.warn('Oscillator tone error:', e);
+      }
     };
 
-    const interval = setInterval(() => {
-      if (!this.isRinging) { clearInterval(interval); return; }
-      const now = ctx.currentTime;
-      playTone(523.25, now, 0.4);
-      playTone(659.25, now + 0.15, 0.4);
-      playTone(783.99, now + 0.3, 0.6);
+    const triggerChime = () => {
+      if (!this.audioCtx) return;
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume().catch(() => {});
+      }
+      const now = this.audioCtx.currentTime;
+      playTone(523.25, now, 0.35); // C5
+      playTone(659.25, now + 0.12, 0.35); // E5
+      playTone(783.99, now + 0.25, 0.55); // G5
+      playTone(1046.50, now + 0.45, 0.65); // C6
+    };
+
+    // Immediate first chime!
+    triggerChime();
+
+    // Repeat every 1.5 seconds continuously until stopped
+    this.alarmInterval = setInterval(() => {
+      if (!this.isRinging) {
+        clearInterval(this.alarmInterval);
+        return;
+      }
+      triggerChime();
     }, 1500);
 
-    return () => { this.isRinging = false; clearInterval(interval); };
+    return () => this.stopAlarm();
   }
 
   // Play user custom audio file
   public playCustomAudio(audioSource: string): () => void {
     this.stopAlarm();
+    this.startContinuousVibration();
     try {
       this.currentAudio = new Audio(audioSource);
       this.currentAudio.loop = true;
       this.currentAudio.play().catch(() => this.playDefaultAlarm());
-      return () => {
-        if (this.currentAudio) {
-          this.currentAudio.pause();
-          this.currentAudio.currentTime = 0;
-          this.currentAudio = null;
-        }
-      };
+      return () => this.stopAlarm();
     } catch {
       return this.playDefaultAlarm();
     }
@@ -98,31 +143,37 @@ class AlarmSoundManager {
     if (!voices || voices.length === 0) return null;
 
     if (lang === 'bn') {
-      // 1. Exact Bangla language match (Android Google বাংলা, bn-BD, bn_BD, bn-IN)
-      return voices.find(v => 
-        v.lang.toLowerCase() === 'bn-bd' ||
-        v.lang.toLowerCase() === 'bn_bd' ||
-        v.lang.toLowerCase().startsWith('bn') ||
-        v.name.includes('বাংলা') ||
-        v.name.toLowerCase().includes('bangla') ||
-        v.name.toLowerCase().includes('bengali')
-      ) || null;
+      return (
+        voices.find(
+          (v) =>
+            v.lang.toLowerCase() === 'bn-bd' ||
+            v.lang.toLowerCase() === 'bn_bd' ||
+            v.lang.toLowerCase().startsWith('bn') ||
+            v.name.includes('বাংলা') ||
+            v.name.toLowerCase().includes('bangla') ||
+            v.name.toLowerCase().includes('bengali')
+        ) || null
+      );
     } else {
-      return voices.find(v => 
-        v.lang.startsWith('en') && (
-          v.name.includes('Female') || 
-          v.name.includes('Zira') || 
-          v.name.includes('Samantha') || 
-          v.name.includes('Google UK English Female') || 
-          v.name.includes('Jenny') || 
-          v.name.includes('Google US English')
-        )
-      ) || voices.find(v => v.lang.startsWith('en')) || null;
+      return (
+        voices.find(
+          (v) =>
+            v.lang.startsWith('en') &&
+            (v.name.includes('Female') ||
+              v.name.includes('Zira') ||
+              v.name.includes('Samantha') ||
+              v.name.includes('Google UK English Female') ||
+              v.name.includes('Jenny') ||
+              v.name.includes('Google US English'))
+        ) ||
+        voices.find((v) => v.lang.startsWith('en')) ||
+        null
+      );
     }
   }
 
   /**
-   * Online high-clarity Bengali / English audio stream (Used for Desktop when OS lacks Bangla pack)
+   * Online high-clarity Bengali / English audio stream
    */
   private playOnlineAudioStream(text: string, lang: 'bn' | 'en'): Promise<boolean> {
     return new Promise((resolve) => {
@@ -130,7 +181,7 @@ class AlarmSoundManager {
         const langCode = lang === 'bn' ? 'bn' : 'en';
         const cleanText = encodeURIComponent(text.trim().slice(0, 350));
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=gtx&tl=${langCode}&q=${cleanText}`;
-        
+
         const audio = new Audio();
         audio.setAttribute('referrerpolicy', 'no-referrer');
         audio.src = url;
@@ -146,9 +197,7 @@ class AlarmSoundManager {
           resolve(false);
         };
 
-        audio.play().then(() => {
-          // playing successfully
-        }).catch(() => {
+        audio.play().catch(() => {
           resolve(false);
         });
       } catch {
@@ -158,23 +207,15 @@ class AlarmSoundManager {
   }
 
   /**
-   * Universal Speech Method: 
-   * - On Mobile: Uses System SpeechSynthesis with Google বাংলা (100% Offline & Online).
-   * - On Desktop: Uses Native voice if installed, or pristine Bengali audio stream.
+   * Universal Speech Method
    */
   public speakText(text: string, lang: 'bn' | 'en' = 'bn'): () => void {
-    this.stopAlarm();
     if (!text || !text.trim()) return () => {};
-    // Start gentle alert chime as backdrop
-    const stopChime = this.playDefaultAlarm();
-
     let cancelled = false;
 
-    // Check if device has native voice (like on Android phones / iPhones / Windows with Bangla pack)
     const nativeVoice = this.getNativeVoice(lang);
 
     if (nativeVoice && 'speechSynthesis' in window) {
-      // 1. Mobile System Voice (100% Offline native voice)
       try {
         window.speechSynthesis.cancel();
         window.speechSynthesis.resume();
@@ -182,7 +223,7 @@ class AlarmSoundManager {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.voice = nativeVoice;
         utterance.lang = lang === 'bn' ? 'bn-BD' : 'en-US';
-        utterance.rate = 0.88; // Clear natural pace
+        utterance.rate = 0.88;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
 
@@ -190,20 +231,17 @@ class AlarmSoundManager {
         window.speechSynthesis.speak(utterance);
 
         return () => {
-          stopChime();
           if (window.speechSynthesis) window.speechSynthesis.cancel();
           this.currentUtterance = null;
         };
       } catch {
-        // fallback to stream
+        // fallback
       }
     }
 
-    // 2. Online Audio Stream (For Laptop / Desktop testing without Bangla pack)
     this.playOnlineAudioStream(text, lang).then((success) => {
       if (cancelled) return;
       if (!success && 'speechSynthesis' in window) {
-        // Fallback to system synthesis
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
@@ -219,7 +257,6 @@ class AlarmSoundManager {
 
     return () => {
       cancelled = true;
-      stopChime();
       if (this.currentAudio) {
         this.currentAudio.pause();
         this.currentAudio.currentTime = 0;
@@ -231,7 +268,7 @@ class AlarmSoundManager {
   }
 
   /**
-   * Smart Voice Alarm - plays attention chime first, then speaks EXACT medicine instructions in pure Bengali or English.
+   * Smart Voice Alarm - plays attention chime continuously and speaks announcement
    */
   public playVoiceAlarm(
     medicineName: string,
@@ -241,58 +278,32 @@ class AlarmSoundManager {
     voiceNote?: string
   ): () => void {
     this.stopAlarm();
+    this.isRinging = true;
+    this.startContinuousVibration();
 
     const mealMap = {
       bn: { before: 'খাওয়ার আগে', after: 'খাওয়ার পরে', with: 'খাবারের সাথে' },
       en: { before: 'before meals', after: 'after meals', with: 'with food' },
     };
-    const mealText = mealMap[lang][mealTime];
+    const mealText = mealMap[lang][mealTime] || 'খাওয়ার পরে';
     let announcement: string;
 
     if (lang === 'bn') {
-      announcement = `আপনার ${medicineName} খাওয়ার সময় হয়েছে। ${dosage} ${mealText} নিন।`;
+      announcement = `আপনার ${medicineName} খাওয়ার সময় হয়েছে। ${dosage || '১ ডোজ'} ${mealText} নিন।`;
       if (voiceNote && voiceNote.trim()) announcement += ` ${voiceNote.trim()}`;
     } else {
-      announcement = `It is time to take your ${medicineName}. Please take ${dosage} ${mealText}.`;
+      announcement = `It is time to take your ${medicineName}. Please take ${dosage || '1 dose'} ${mealText}.`;
       if (voiceNote && voiceNote.trim()) announcement += ` ${voiceNote.trim()}`;
     }
 
-    // Melodic attention chime before speech (Web Audio API - 100% offline)
-    this.initContext();
-    if (this.audioCtx) {
-      const ctx = this.audioCtx;
-      const now = ctx.currentTime;
-      const playChime = (freq: number, start: number, dur: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, start);
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.25, start + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(start);
-        osc.stop(start + dur);
-      };
-      playChime(880, now, 0.25);
-      playChime(1046.5, now + 0.15, 0.25);
-      playChime(1318.5, now + 0.3, 0.4);
-    }
+    // Always start continuous chime loop in background
+    this.playDefaultAlarm();
 
-    // Speak after 700ms so chime finishes cleanly first
-    let stopSpeakFn: (() => void) | null = null;
-    let cancelled = false;
-
-    const timeout = setTimeout(() => {
-      if (cancelled) return;
-      stopSpeakFn = this.speakText(announcement, lang);
-    }, 700);
+    // Speak voice instruction
+    const stopSpeak = this.speakText(announcement, lang);
 
     return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-      if (stopSpeakFn) stopSpeakFn();
+      stopSpeak();
       this.stopAlarm();
     };
   }
@@ -310,12 +321,18 @@ class AlarmSoundManager {
 
   public stopAlarm() {
     this.isRinging = false;
+    if (this.alarmInterval) {
+      clearInterval(this.alarmInterval);
+      this.alarmInterval = null;
+    }
+    this.stopContinuousVibration();
+
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio.currentTime = 0;
       this.currentAudio = null;
     }
-    if (this.currentUtterance && window.speechSynthesis) {
+    if (this.currentUtterance && typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       this.currentUtterance = null;
     }
