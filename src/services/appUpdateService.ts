@@ -13,19 +13,19 @@ export interface AppUpdateConfig {
   releasedAt: string;
 }
 
-export const CURRENT_APP_VERSION = '1.0.0';
-export const CURRENT_APP_VERSION_CODE = 100;
+export const CURRENT_APP_VERSION = '1.0.1';
+export const CURRENT_APP_VERSION_CODE = 101;
 
 const STORAGE_KEY_UPDATE_CONFIG = 'quicklife_app_update_config_v1';
 const STORAGE_KEY_DISMISSED_VERSION = 'quicklife_dismissed_update_version';
 
 export const DEFAULT_UPDATE_CONFIG: AppUpdateConfig = {
-  latestVersion: '1.0.0',
-  latestVersionCode: 100,
-  apkSize: '4.37 MB',
-  downloadUrl: 'https://github.com/Md-Masud285/quicklife/releases/download/v1.0.0/QuickLife99-v1.0.0.apk',
-  apkDownloadUrl: 'https://github.com/Md-Masud285/quicklife/releases/download/v1.0.0/QuickLife99-v1.0.0.apk',
-  releaseNotes: '• প্রথম অফিসিয়াল রিলিজ\n• রক্তদাতা ডিরেক্টরি\n• ডিজিটাল স্টাডি হাব ও সূত্রাবলি\n• মেডিসিন অ্যালার্ম সিস্টেম',
+  latestVersion: '1.0.1',
+  latestVersionCode: 101,
+  apkSize: '4.4 MB',
+  downloadUrl: 'https://github.com/Md-Masud285/quicklife/releases/download/v1.0.1/QuickLife99-v1.0.1.apk',
+  apkDownloadUrl: 'https://github.com/Md-Masud285/quicklife/releases/download/v1.0.1/QuickLife99-v1.0.1.apk',
+  releaseNotes: '• নতুন মেডিসিন অ্যালার্ম সিস্টেম ও সাউন্ড লুপ ফিক্স\n• অটোমেটিক নোটিফিকেশন পারমিশন ও ব্যাকগ্রাউন্ড সেটিংস\n• ৯৯৯ পার্সোনালাইজড জরুরি নম্বর সেভার\n• পারফরম্যান্স ও স্ট্যাবিলিটি আপডেট',
   forceUpdate: false,
   isActive: true,
   releasedAt: new Date().toISOString().split('T')[0],

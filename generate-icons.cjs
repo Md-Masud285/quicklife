@@ -144,6 +144,16 @@ async function applyIcons() {
     console.log(`Injected ${addedCount} native permissions & lockscreen flags into AndroidManifest.xml`);
   }
 
+  // 5. Update build.gradle to versionCode 101 and versionName "1.0.1"
+  const gradlePath = path.join(__dirname, 'android', 'app', 'build.gradle');
+  if (fs.existsSync(gradlePath)) {
+    let gradle = fs.readFileSync(gradlePath, 'utf8');
+    gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode 101');
+    gradle = gradle.replace(/versionName\s+["'][^"']+["']/, 'versionName "1.0.1"');
+    fs.writeFileSync(gradlePath, gradle, 'utf8');
+    console.log('Updated android/app/build.gradle to versionCode 101 and versionName 1.0.1');
+  }
+
   console.log('ALL ANDROID LAUNCHER ICONS, STRINGS AND NATIVE PERMISSIONS SUCCESSFULLY CONFIGURED!');
 }
 
