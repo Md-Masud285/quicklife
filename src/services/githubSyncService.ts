@@ -91,7 +91,19 @@ class GithubSyncService {
           localStorage.setItem('quicklife_auth_api_config_v1', JSON.stringify(dbData.apiConfig));
         }
         if (dbData.appUpdateConfig) {
-          localStorage.setItem('quicklife_app_update_config_v1', JSON.stringify(dbData.appUpdateConfig));
+          try {
+            const stored = localStorage.getItem('quicklife_app_update_config_v1');
+            const storedVer = stored ? JSON.parse(stored)?.latestVersion : '1.0.1';
+            const cloudVer = dbData.appUpdateConfig.latestVersion || '0.0.0';
+            const v1 = cloudVer.replace(/^v/i, '').split('.').map((n: string) => parseInt(n, 10) || 0);
+            const v2 = (storedVer || '1.0.1').replace(/^v/i, '').split('.').map((n: string) => parseInt(n, 10) || 0);
+            const isNewerOrEqual = (v1[0] > v2[0]) || (v1[0] === v2[0] && v1[1] > v2[1]) || (v1[0] === v2[0] && v1[1] === v2[1] && v1[2] >= v2[2]);
+            if (isNewerOrEqual) {
+              localStorage.setItem('quicklife_app_update_config_v1', JSON.stringify(dbData.appUpdateConfig));
+            }
+          } catch {
+            localStorage.setItem('quicklife_app_update_config_v1', JSON.stringify(dbData.appUpdateConfig));
+          }
         }
         if (dbData.users && Array.isArray(dbData.users)) {
           localStorage.setItem('quicklife_all_users_v2', JSON.stringify(dbData.users));

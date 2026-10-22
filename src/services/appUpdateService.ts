@@ -45,30 +45,39 @@ class AppUpdateService {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        this.config = {
-          ...DEFAULT_UPDATE_CONFIG,
-          ...parsed,
-          apkDownloadUrl: parsed.apkDownloadUrl || parsed.downloadUrl || DEFAULT_UPDATE_CONFIG.downloadUrl,
-          downloadUrl: parsed.downloadUrl || parsed.apkDownloadUrl || DEFAULT_UPDATE_CONFIG.downloadUrl,
-        };
+        if (this.compareVersions(parsed.latestVersion || '0.0.0', DEFAULT_UPDATE_CONFIG.latestVersion) >= 0) {
+          this.config = {
+            ...DEFAULT_UPDATE_CONFIG,
+            ...parsed,
+            apkDownloadUrl: parsed.apkDownloadUrl || parsed.downloadUrl || DEFAULT_UPDATE_CONFIG.downloadUrl,
+            downloadUrl: parsed.downloadUrl || parsed.apkDownloadUrl || DEFAULT_UPDATE_CONFIG.downloadUrl,
+          };
+        } else {
+          this.config = { ...DEFAULT_UPDATE_CONFIG };
+          localStorage.setItem(STORAGE_KEY_UPDATE_CONFIG, JSON.stringify(DEFAULT_UPDATE_CONFIG));
+        }
       } catch {
-        this.config = DEFAULT_UPDATE_CONFIG;
+        this.config = { ...DEFAULT_UPDATE_CONFIG };
       }
     } else {
       localStorage.setItem(STORAGE_KEY_UPDATE_CONFIG, JSON.stringify(DEFAULT_UPDATE_CONFIG));
     }
 
-    // Listen to cloud sync events
+    // Listen to cloud sync events (never allow stale cloud db to downgrade version)
     window.addEventListener('ql_cloud_data_synced', (e: any) => {
       const dbData = e.detail;
       if (dbData?.appUpdateConfig) {
-        this.config = {
-          ...DEFAULT_UPDATE_CONFIG,
-          ...dbData.appUpdateConfig,
-          apkDownloadUrl: dbData.appUpdateConfig.apkDownloadUrl || dbData.appUpdateConfig.downloadUrl || DEFAULT_UPDATE_CONFIG.downloadUrl,
-          downloadUrl: dbData.appUpdateConfig.downloadUrl || dbData.appUpdateConfig.apkDownloadUrl || DEFAULT_UPDATE_CONFIG.downloadUrl,
-        };
-        this.notify();
+        const cloudVer = dbData.appUpdateConfig.latestVersion || '0.0.0';
+        const currentVer = this.config.latestVersion || DEFAULT_UPDATE_CONFIG.latestVersion;
+        if (this.compareVersions(cloudVer, currentVer) >= 0) {
+          this.config = {
+            ...this.config,
+            ...dbData.appUpdateConfig,
+            apkDownloadUrl: dbData.appUpdateConfig.apkDownloadUrl || dbData.appUpdateConfig.downloadUrl || this.config.apkDownloadUrl,
+            downloadUrl: dbData.appUpdateConfig.downloadUrl || dbData.appUpdateConfig.apkDownloadUrl || this.config.downloadUrl,
+          };
+          this.notify();
+        }
       }
     });
 
@@ -84,21 +93,26 @@ class AppUpdateService {
       if (res.ok) {
         const release = await res.json();
         const apkAsset = release.assets?.find((a: any) => a.name?.endsWith('.apk')) || release.assets?.[0];
-        const sizeMb = apkAsset?.size ? `${(apkAsset.size / (1024 * 1024)).toFixed(1)} MB` : undefined;
+        const sizeMb = apkAsset?.size ? `${(apkAsset.size / (1024 * 1024)).toFixed(2)} MB` : undefined;
         const versionStr = (release.tag_name || release.name || '').replace(/^v/i, '');
 
         if (versionStr) {
-          const updated: Partial<AppUpdateConfig> = {
-            latestVersion: versionStr,
-            downloadUrl: apkAsset?.browser_download_url || release.html_url || this.config.downloadUrl,
-            apkDownloadUrl: apkAsset?.browser_download_url || release.html_url || this.config.apkDownloadUrl,
-          };
-          if (sizeMb) updated.apkSize = sizeMb;
-          if (release.body) updated.releaseNotes = release.body;
-          if (release.published_at) updated.releasedAt = release.published_at.split('T')[0];
+          if (this.compareVersions(versionStr, this.config.latestVersion) >= 0) {
+            const updated: Partial<AppUpdateConfig> = {
+              latestVersion: versionStr,
+              downloadUrl: apkAsset?.browser_download_url || release.html_url || this.config.downloadUrl,
+              apkDownloadUrl: apkAsset?.browser_download_url || release.html_url || this.config.apkDownloadUrl,
+            };
+            if (sizeMb) updated.apkSize = sizeMb;
+            if (release.body) updated.releaseNotes = release.body;
+            if (release.published_at) updated.releasedAt = release.published_at.split('T')[0];
 
-          this.config = { ...this.config, ...updated };
-          this.notify();
+            this.config = { ...this.config, ...updated };
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(STORAGE_KEY_UPDATE_CONFIG, JSON.stringify(this.config));
+            }
+            this.notify();
+          }
         }
       }
     } catch {

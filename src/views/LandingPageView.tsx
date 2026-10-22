@@ -53,7 +53,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({ onLaunchWebApp
   };
 
   const dynamicVersion = updateConfig.latestVersion || CURRENT_APP_VERSION;
-  const dynamicSize = updateConfig.apkSize || '14.8 MB';
+  const dynamicSize = updateConfig.apkSize || '4.37 MB';
 
   const t = {
     bn: {
