@@ -144,12 +144,37 @@ async function applyIcons() {
     console.log(`Injected ${addedCount} native permissions & lockscreen flags into AndroidManifest.xml`);
   }
 
-  // 5. Update build.gradle to versionCode 101 and versionName "1.0.1"
+  // 5. Update build.gradle to versionCode 101, versionName "1.0.1", and permanent signing config
   const gradlePath = path.join(__dirname, 'android', 'app', 'build.gradle');
   if (fs.existsSync(gradlePath)) {
     let gradle = fs.readFileSync(gradlePath, 'utf8');
     gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode 101');
     gradle = gradle.replace(/versionName\s+["'][^"']+["']/, 'versionName "1.0.1"');
+
+    // Inject permanent signing config so every build uses the exact same signature
+    if (!gradle.includes('signingConfigs {') && fs.existsSync(path.join(__dirname, 'quicklife-release.keystore'))) {
+      const signingBlock = `    signingConfigs {
+        release {
+            storeFile file('../../quicklife-release.keystore')
+            storePassword 'quicklife123'
+            keyAlias 'quicklife'
+            keyPassword 'quicklife123'
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }`;
+      gradle = gradle.replace(/buildTypes\s*\{[\s\S]*?\}\s*\}/m, signingBlock + '\n}');
+      console.log('Injected permanent release keystore into android/app/build.gradle');
+    }
+
     fs.writeFileSync(gradlePath, gradle, 'utf8');
     console.log('Updated android/app/build.gradle to versionCode 101 and versionName 1.0.1');
   }
